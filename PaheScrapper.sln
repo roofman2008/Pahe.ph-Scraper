@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.168
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaheScrapper", "PaheScrapper\PaheScrapper.csproj", "{7CFA97A6-4AED-4970-8BC5-DB9E283A673E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WordPressPoster", "WordPressPoster\WordPressPoster.csproj", "{05791BBB-A788-4EB0-A0C3-6BB822F1C8B7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7CFA97A6-4AED-4970-8BC5-DB9E283A673E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CFA97A6-4AED-4970-8BC5-DB9E283A673E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CFA97A6-4AED-4970-8BC5-DB9E283A673E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CFA97A6-4AED-4970-8BC5-DB9E283A673E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05791BBB-A788-4EB0-A0C3-6BB822F1C8B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05791BBB-A788-4EB0-A0C3-6BB822F1C8B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05791BBB-A788-4EB0-A0C3-6BB822F1C8B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05791BBB-A788-4EB0-A0C3-6BB822F1C8B7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18F69846-E9D6-4A9B-9F5D-1E04A9C73858}
+	EndGlobalSection
+EndGlobal

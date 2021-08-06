@@ -1,0 +1,3 @@
+﻿<p>[su_tab title="{tabname}" disabled="no" anchor="" url="" target="blank" class=""]</p>
+[DynamicContent]
+<p>[/su_tab]</p>

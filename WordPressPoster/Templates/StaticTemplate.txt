@@ -1,0 +1,41 @@
+﻿<p>[su_box title="Metadata" style="soft"]</p>
+<p><a href="{imdbLink}"><img class="aligncenter wp-image-53 size-medium" src="{movieImage}" alt="" width="300" height="200" /></a></p>
+<p>[su_table]</p>
+<table>
+<tbody>
+<tr>
+<td><strong>Title</strong></td>
+<td>{title}</td>
+</tr>
+<tr>
+<td><strong>Description</strong></td>
+<td>{descriptipn}</td>
+</tr>
+<tr>
+<td><strong>Score</strong></td>
+<td>{score} from 10 from {users-no}</td>
+</tr>
+<tr>
+<td><strong>Directors</strong></td>
+<td>{directors}</td>
+</tr>
+<tr>
+<td><strong>Actors</strong></td>
+<td>{actors}</td>
+</tr>
+</tbody>
+</table>
+<p>[/su_table]</p>
+<p>[/su_box]</p>
+<p>[su_box title="Trailer" style="soft"]</p>
+<p>[su_youtube url="{youtubeurl}"]</p>
+<p>[/su_box]</p>
+<p>[su_box title="Extras" style="soft"]</p>
+<p>[su_button url="{screenshotLink}" target="blank" background="#0b124a"]Screenshot[/su_button]</p>
+<p>[su_button url="{subtitlesLink}" target="blank" background="#59320d"]Subtitles[/su_button]</p>
+<p>[/su_box]</p>
+<p>[su_box title="Download" style="soft"]</p>
+<p>[su_tabs active="1" vertical="yes"]</p>
+[DynamicContent]
+<p>[/su_tabs]</p>
+<p>[/su_box]</p>

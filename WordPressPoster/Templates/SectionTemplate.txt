@@ -1,0 +1,3 @@
+﻿<p>[su_service title="{sectionname}" icon="icon: download"]</p>
+[DynamicContent]
+<p>[/su_service]</p>

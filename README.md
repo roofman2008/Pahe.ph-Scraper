@@ -6,5 +6,5 @@ This project i done it from 2 years ago, but i'm reviving the project again caus
 
 # ToDo
 - Decoding VM Link Protection [In Progress]
-- Re-Implement SoraLink Link Extraction [No Started Yet]
+- Re-Implement SoraLink Link Extraction [Not Started Yet]
 - Implementing Cloudflare Bypassing Automatic Mechansims [Not Needed Now]

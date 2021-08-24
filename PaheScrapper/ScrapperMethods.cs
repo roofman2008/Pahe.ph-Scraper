@@ -26,7 +26,7 @@ namespace PaheScrapper
             var pagesNode = paginationNode.Descendants().SingleByNameNClass("span", "pages");
             var pagesText = pagesNode.InnerText;
             var textSplit = pagesText.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            var pagesNo = int.Parse(textSplit[textSplit.Length - 1]);
+            var pagesNo = int.Parse(textSplit[textSplit.Length - 1].Replace(",", ""));
             return pagesNo;
         }
 
@@ -326,6 +326,19 @@ namespace PaheScrapper
             }
 
             return details;
+        }
+
+        public static WebRequestHeader ScrapeBypassSurcuri(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
+        {
+            int timeout = 30; /*sec*/
+
+            var bodyWaiter = new WebDriverWait(driver.SwitchTo().Window(windows[currentWindow]), TimeSpan.FromSeconds(timeout));
+            var bodyElement = bodyWaiter.Until(ExpectedConditions.ElementExists(new ByAll(By.TagName("body"), By.Id("top"))));
+
+            if (bodyElement != null)
+                return WebDriverHelper.ReplicateRequestHeader(driver.SwitchTo().Window(windows[currentWindow]));
+            else
+                return null;
         }
 
         public static string ScrapeMoviesTrueLinks(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)

@@ -168,7 +168,7 @@ namespace PaheScrapper
                             {
                                 ScrapperWeb.ReleaseActiveScrape();
                                 int scrapperInstance = Configuration.Default.WebDriveInstances;
-                                ScrapperWeb.IntializeActiveScrape(scrapperInstance);
+                                ScrapperWeb.InitializeActiveScrape(scrapperInstance);
                             }
 
                             ConsoleHelper.LogCritical($"Re-Run the Scarpper for [{retry}] time");

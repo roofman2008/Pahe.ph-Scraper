@@ -28,24 +28,14 @@ namespace PaheScrapper
         static Semaphore semaphore;
 
 
-        public static HtmlDocument GetDownloadHtml(string url, string cookie = null)
+        public static HtmlDocument GetDownloadHtml(string url, WebRequestHeader header)
         {
             HttpWebRequest request = (HttpWebRequest) WebRequest.Create(url);
             HttpWebResponse response;
 
             request.Timeout = ScrapperConstants.HttpRequestTimeout();
-            request.Accept =
-                "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9";
-            //request.Headers.Add("accept-encoding", "gzip, deflate, br");
-            //request.Headers.Add("accept-language", "en-US,en;q=0.9");
-            //request.Headers.Add("cache-control", "no-cache");
-            //request.Headers.Add("dnt", "en-US,en;q=0.9");
 
-            if (!string.IsNullOrEmpty(cookie))
-                request.Headers.Add("cookie", cookie);
-            
-            request.UserAgent =
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36 Edg/92.0.902.62";
+            header?.Set(request);
 
             try
             {
@@ -75,7 +65,7 @@ namespace PaheScrapper
             throw new ScrapperDownloaderException("Cannot Find Proper Response.");
         }
 
-        public static HtmlDocument PostDownloadHtml(string url, Dictionary<string, string> parameters)
+        public static HtmlDocument PostDownloadHtml(string url, Dictionary<string, string> parameters, WebRequestHeader header)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             HttpWebResponse response;
@@ -95,6 +85,8 @@ namespace PaheScrapper
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.ContentLength = data.Length;
+
+            header?.Set(request);
 
             using (var stream = request.GetRequestStream())
             {
@@ -129,7 +121,7 @@ namespace PaheScrapper
             throw new ScrapperDownloaderException("Cannot Find Proper Response.");
         }
 
-        public static void IntializeActiveScrape(int clonesNo)
+        public static void InitializeActiveScrape(int clonesNo)
         {
             service = ChromeDriverService.CreateDefaultService();
             service.EnableVerboseLogging = false;

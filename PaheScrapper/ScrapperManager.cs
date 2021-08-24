@@ -17,8 +17,7 @@ namespace PaheScrapper
         private int _currentPage;
         private int _maxPage;
         private readonly WebsiteContext _websiteContext;
-        private string cookieValue =
-            "sucuri_cloudproxy_uuid_198f125c3=d185cf5e32eb8cfd5f5c589493a42e73; sucuri_cloudproxy_uuid_ef57f78a7=493193008439228ce5e69c0d1198fc42";
+        private WebRequestHeader _webRequestHeader;
 
         public ScrapperManager()
         {
@@ -50,7 +49,13 @@ namespace PaheScrapper
                 retry:
                 try
                 {
-                    htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLanding(), cookieValue);
+                    ConsoleHelper.LogInfo("Bypass Surcuri");
+                    ScrapperWeb.InitializeActiveScrape(1);
+                    _webRequestHeader = ScrapperWeb.ActiveScrape(0, ScrapperConstants.WebsiteLanding(), ScrapperMethods.ScrapeBypassSurcuri);
+                    ScrapperWeb.ReleaseActiveScrape();
+                    ConsoleHelper.LogCommandHandled("Surcuri Bypassed");
+
+                    htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLanding(), _webRequestHeader);
                     _websiteContext.PagesNo = _maxPage = ScrapperMethods.ScrapePagesCount(htmlDocument);
                 }
                 catch (Exception e)
@@ -131,7 +136,7 @@ namespace PaheScrapper
                     ConsoleHelper.LogInfo($"Page: {_currentPage}/{_maxPage}");
 
                     _currentPage = i;
-                    htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLandingPaging(i), cookieValue);
+                    htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLandingPaging(i), _webRequestHeader);
 
                     var movieList = ScrapperMethods.ScrapeMoviesList(htmlDocument);
                     var newMoviesList = movieList.Where(l =>
@@ -168,7 +173,7 @@ namespace PaheScrapper
                     retry:
                     try
                     {
-                        htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, cookieValue);
+                        htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, _webRequestHeader);
                         var tmpDetails = ScrapperMethods.ScrapeMovieDetails(htmlDocument);
 
                         if (movie.MovieDetails == null)
@@ -326,7 +331,7 @@ namespace PaheScrapper
             {
                 int scrapperInstance = Configuration.Default.WebDriveInstances;
 
-                ScrapperWeb.IntializeActiveScrape(scrapperInstance);
+                ScrapperWeb.InitializeActiveScrape(scrapperInstance);
 
                 int currentPageSnapshot = _currentPage;
 

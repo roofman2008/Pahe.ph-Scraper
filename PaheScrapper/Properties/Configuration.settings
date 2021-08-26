@@ -18,7 +18,7 @@
       <Value Profile="(Default)">4</Value>
     </Setting>
     <Setting Name="HTMLSaveStateThershold" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">20</Value>
+      <Value Profile="(Default)">5</Value>
     </Setting>
     <Setting Name="WebDriveSaveStateThershold" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">1</Value>

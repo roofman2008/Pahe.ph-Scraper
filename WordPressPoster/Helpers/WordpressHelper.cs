@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using WordPressPoster.Models;
-using WordPressRestApi;
+﻿using WordPressRestApi;
 using WordPressRestApi.CreateModel;
 using WordPressRestApi.Models;
 using WordPressRestApi.QueryModel;

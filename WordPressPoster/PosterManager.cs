@@ -2,7 +2,6 @@
 using System.Linq;
 using WordPressPoster.Helpers;
 using WordPressRestApi.CreateModel;
-using WordPressRestApi.Models;
 
 namespace WordPressPoster
 {

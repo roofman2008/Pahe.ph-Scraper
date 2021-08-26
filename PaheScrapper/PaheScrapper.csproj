@@ -73,6 +73,7 @@
     <Compile Include="Helpers\ProcessHelper.cs" />
     <Compile Include="Helpers\RutimeParser.cs" />
     <Compile Include="Helpers\UriHelper.cs" />
+    <Compile Include="Helpers\VMDecoder.cs" />
     <Compile Include="Helpers\WebDriverHelper.cs" />
     <Compile Include="Helpers\WindowHelper.cs" />
     <Compile Include="Models\DownloadQuality.cs" />

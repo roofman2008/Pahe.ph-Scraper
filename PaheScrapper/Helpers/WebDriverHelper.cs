@@ -1,8 +1,6 @@
 ﻿using System.Net;
-using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.Extensions;
-using PaheScrapper.Helpers;
 
 namespace PaheScrapper.Helpers
 {

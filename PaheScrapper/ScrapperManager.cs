@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -41,6 +40,12 @@ namespace PaheScrapper
         {
             HtmlDocument htmlDocument = null;
 
+            ConsoleHelper.LogBranch("Bypass Surcuri");
+            ScrapperWeb.InitializeActiveScrape(1);
+            _webRequestHeader = ScrapperWeb.ActiveScrape(0, ScrapperConstants.WebsiteLanding(), ScrapperMethods.ScrapeBypassSurcuri);
+            ScrapperWeb.ReleaseActiveScrape();
+            ConsoleHelper.LogInfo("Surcuri Bypassed");
+
             if (_scrapperState == ScrapperState.Initiate)
             {
                 int retryCount = 0;
@@ -49,12 +54,6 @@ namespace PaheScrapper
                 retry:
                 try
                 {
-                    ConsoleHelper.LogInfo("Bypass Surcuri");
-                    ScrapperWeb.InitializeActiveScrape(1);
-                    _webRequestHeader = ScrapperWeb.ActiveScrape(0, ScrapperConstants.WebsiteLanding(), ScrapperMethods.ScrapeBypassSurcuri);
-                    ScrapperWeb.ReleaseActiveScrape();
-                    ConsoleHelper.LogCommandHandled("Surcuri Bypassed");
-
                     htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLanding(), _webRequestHeader);
                     _websiteContext.PagesNo = _maxPage = ScrapperMethods.ScrapePagesCount(htmlDocument);
                 }

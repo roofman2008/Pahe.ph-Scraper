@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using WordPressPoster.Helpers;
-using WordPressRestApi;
-using WordPressRestApi.CreateModel;
-
-namespace WordPressPoster
+﻿namespace WordPressPoster
 {
     class Program
     {

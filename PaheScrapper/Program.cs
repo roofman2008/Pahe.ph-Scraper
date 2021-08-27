@@ -10,7 +10,7 @@ namespace PaheScrapper
     {
         static void Main(string[] args)
         {
-            testDecoder();
+            //testDecoder();
             ScrapperWeb.ReleaseGarbageScrape();
 
             if (args.Length == 0)

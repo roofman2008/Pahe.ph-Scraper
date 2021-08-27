@@ -42,7 +42,7 @@ namespace PaheScrapper
 
             ConsoleHelper.LogBranch("Bypass Surcuri");
             ScrapperWeb.InitializeActiveScrape(1);
-            _webRequestHeader = ScrapperWeb.ActiveScrape(0, ScrapperConstants.WebsiteLanding(), ScrapperMethods.ScrapeBypassSurcuri);
+            _webRequestHeader = ScrapperWeb.ActiveScrape(0, ScrapperConstants.WebsiteLanding(), ScrapperMethods.BypassSurcuri);
             ScrapperWeb.ReleaseActiveScrape();
             ConsoleHelper.LogInfo("Surcuri Bypassed");
 
@@ -55,7 +55,7 @@ namespace PaheScrapper
                 try
                 {
                     htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLanding(), _webRequestHeader);
-                    _websiteContext.PagesNo = _maxPage = ScrapperMethods.ScrapePagesCount(htmlDocument);
+                    _websiteContext.PagesNo = _maxPage = ScrapperMethods.PagesCount(htmlDocument);
                 }
                 catch (Exception e)
                 {
@@ -114,7 +114,7 @@ namespace PaheScrapper
                 {
                     ConsoleHelper.LogInfo($"Page: {_currentPage}/{_maxPage}");
 
-                    var movieList = ScrapperMethods.ScrapeMoviesList(htmlDocument);
+                    var movieList = ScrapperMethods.MoviesList(htmlDocument);
                     var newMoviesList = movieList.Where(l =>
                         _websiteContext.MovieSummeries.All(c => c.CompleteInfoUrl != l.CompleteInfoUrl)).ToList();
 
@@ -128,6 +128,8 @@ namespace PaheScrapper
                         goto summeryFinish;
                 }
 
+                goto summeryFinish;
+
                 int currentPageSnapshot = _currentPage;
 
                 for (int i = currentPageSnapshot; i < _maxPage; i++)
@@ -137,7 +139,7 @@ namespace PaheScrapper
                     _currentPage = i;
                     htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLandingPaging(i), _webRequestHeader);
 
-                    var movieList = ScrapperMethods.ScrapeMoviesList(htmlDocument);
+                    var movieList = ScrapperMethods.MoviesList(htmlDocument);
                     var newMoviesList = movieList.Where(l =>
                         _websiteContext.MovieSummeries.All(c => c.CompleteInfoUrl != l.CompleteInfoUrl)).ToList();
 
@@ -156,7 +158,7 @@ namespace PaheScrapper
                 _maxPage = _websiteContext.MovieSummeries.Count;
                 saveState(_scrapperState);
             }
-
+ 
             if (_scrapperState == ScrapperState.Details)
             {
                 int currentPageSnapshot = _currentPage;
@@ -173,7 +175,8 @@ namespace PaheScrapper
                     try
                     {
                         htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, _webRequestHeader);
-                        var tmpDetails = ScrapperMethods.ScrapeMovieDetails(htmlDocument);
+                        ScrapperMethods.DecodeDetailsVM(htmlDocument);
+                        var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument);
 
                         if (movie.MovieDetails == null)
                         {
@@ -393,7 +396,7 @@ namespace PaheScrapper
                                     {
                                         movieLink.ProxiedUrl =
                                             ScrapperWeb.ActiveScrape(taskId, movieLink.Url,
-                                                ScrapperMethods.ScrapeMoviesTrueLinks);
+                                                ScrapperMethods.MoviesTrueLinks);
 
                                         if (failedUrls.Contains(movieLink))
                                             failedUrls.Remove(movieLink);

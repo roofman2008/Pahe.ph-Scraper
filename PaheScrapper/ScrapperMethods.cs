@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.PageObjects;
 using OpenQA.Selenium.Support.UI;
@@ -15,7 +17,7 @@ namespace PaheScrapper
 {
     public static class ScrapperMethods
     {
-        public static int ScrapePagesCount(HtmlDocument document)
+        public static int PagesCount(HtmlDocument document)
         {
             var docNode = document.DocumentNode;
             var paginationNode = docNode.Descendants().SingleByNameNClass("div", "pagination");
@@ -26,7 +28,7 @@ namespace PaheScrapper
             return pagesNo;
         }
 
-        public static IEnumerable<MovieSummery> ScrapeMoviesList(HtmlDocument document)
+        public static IEnumerable<MovieSummery> MoviesList(HtmlDocument document)
         {
             List<MovieSummery> movieSummeries = new List<MovieSummery>();
 
@@ -70,7 +72,7 @@ namespace PaheScrapper
             return movieSummeries;
         }
 
-        public static MovieDetails ScrapeMovieDetails(HtmlDocument document)
+        public static MovieDetails MovieDetails(HtmlDocument document)
         {
             MovieDetails details = new MovieDetails();
 
@@ -324,7 +326,54 @@ namespace PaheScrapper
             return details;
         }
 
-        public static WebRequestHeader ScrapeBypassSurcuri(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
+        public static void DecodeDetailsVM(HtmlDocument document)
+        {
+            string documentHtml = string.Empty;
+            int startIndex = 0;
+            int endIndex = 0;
+            string startPattern = "";
+            string endPattern = "";
+
+            documentHtml = document.ParsedText;
+
+            if (string.IsNullOrEmpty(documentHtml))
+                return;
+
+            //Get VM Decoder Parameters
+            startPattern = "return decodeURIComponent(escape(r))";
+            endPattern = "))";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal) + 2;
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(0, endIndex);
+            documentHtml = documentHtml.Replace("\"", "");
+            var vmVariables = documentHtml.Split(new []{','});
+            var decodedHtml = VMDecoder.eval(vmVariables[0], int.Parse(vmVariables[1]), vmVariables[2], int.Parse(vmVariables[3]),
+                int.Parse(vmVariables[4]), int.Parse(vmVariables[5]));
+
+            //Movie Array Id
+            documentHtml = decodedHtml;
+            startPattern = "location.href=";
+            endPattern = "[";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(0, endIndex);
+            string movieArrayId = documentHtml;
+
+            //Movie Array Object
+            documentHtml = decodedHtml;
+            startPattern = movieArrayId+"=";
+            endPattern = "};";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) + 1;
+            documentHtml = documentHtml.Substring(0, endIndex);
+            JObject objectTest = JObject.Parse(documentHtml);
+            IEnumerable<JToken> values = objectTest.Properties().Select(l => l.Value);
+        }
+
+        public static WebRequestHeader BypassSurcuri(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
         {
             int timeout = 30; /*sec*/
 
@@ -337,7 +386,7 @@ namespace PaheScrapper
                 return null;
         }
 
-        public static string ScrapeMoviesTrueLinks(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
+        public static string MoviesTrueLinks(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
         {
             int taskTimeout = Configuration.Default.WebDriveTaskTimeout; /*sec*/
             int timeout = 30; /*sec*/

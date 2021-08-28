@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -188,10 +189,40 @@ namespace PaheScrapper
                     .Replace("<p><b>", "<p><b><b>")
                     .TrimStart()
                     .TrimEnd()
-                    .Split(new string[] {"&nbsp;\n", "<p><b>"}, StringSplitOptions.RemoveEmptyEntries);
+                    .Split(new string[] {"&nbsp;\n", "<p><b>"}, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(l=>l.TrimStart().TrimEnd() != "&nbsp;" && !string.IsNullOrEmpty(l))
+                    .ToArray();
+
+                /*Fix Array Split*/
+                List<string> downloadHtmlsList = new List<string>();
+                for(int i=0;i<downloadHtmls.Length;i++)
+                {
+                    if (i == 0)
+                    {
+                        downloadHtmlsList.Add(downloadHtmls[i]);
+                    }
+                    else
+                    {
+                        if (downloadHtmls[i].Length >= 4)
+                        {
+                            var template = downloadHtmls[i].Substring(0, 4);
+                            if (template == "{{--")
+                            {
+                                downloadHtmlsList[i- 1] = downloadHtmlsList[i - 1] + downloadHtmls[i];
+                            }
+                            else
+                            {
+                                downloadHtmlsList.Add(downloadHtmls[i]);
+                            }
+                        }
+                    }
+                }
+
+                downloadHtmls = downloadHtmlsList.ToArray();
 
                 MovieEpisode episode = new MovieEpisode() {Title = tabName};
                 string qualityNote = null;
+
 
                 foreach (var downloadHtml in downloadHtmls)
                 {
@@ -251,8 +282,18 @@ namespace PaheScrapper
                     bool sizeAvailable = false;
                     var size1 = downloadLinkNodes.FirstOrDefault(l => !l.Contains("{{"))?
                         .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .TrimStart()
                         .TrimEnd();
+                    if (size1 != null && size1.IndexOf("(") > -1)
+                        size1 = size1?.Substring(0, size1.IndexOf("("));
+                    if (size1 != null && size1.ToLower().Contains("mb") && size1.ToLower().Contains("gb") && size1.Contains("/"))
+                    {
+                        size1 = size1.ToLower()?.Replace("mb", "");
+                        size1 = size1.ToLower()?.Replace("/", "");
+                    }
+
                     float sizeInNumber;
                     sizeAvailable |= size1 != null && float.TryParse(size1.ToLower()
                         .Replace("gb", "")
@@ -263,8 +304,17 @@ namespace PaheScrapper
                         .TrimEnd(), out sizeInNumber);
                     var size2 = downloadLinkQualityInfo?.InnerText
                         .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .TrimStart()
                         .TrimEnd();
+                    if (size2 != null && size2.IndexOf("(") > -1)
+                        size2 = size2?.Substring(0, size2.IndexOf("("));
+                    if (size2 != null && size2.ToLower().Contains("mb") && size2.ToLower().Contains("gb") && size2.Contains("/"))
+                    {
+                        size2 = size2?.ToLower().Replace("mb", "");
+                        size2 = size2?.ToLower().Replace("/", "");
+                    }
                     sizeAvailable |= size2 != null && float.TryParse(size2.ToLower()
                         .Replace("gb", "")
                         .Replace("mb", "")
@@ -282,6 +332,9 @@ namespace PaheScrapper
                             size1 ?? size2 : null,
                         Notes = qualityNote
                     };
+
+                    if (downloadQuality.Quality == null || downloadQuality.Size == null)
+                        Debugger.Break();
 
                     if (qualityNote != null)
                         qualityNote = null;

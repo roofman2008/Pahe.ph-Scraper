@@ -128,7 +128,7 @@ namespace PaheScrapper
                         goto summeryFinish;
                 }
 
-                goto summeryFinish;
+                //goto summeryFinish;
 
                 int currentPageSnapshot = _currentPage;
 
@@ -175,9 +175,10 @@ namespace PaheScrapper
                     try
                     {
                         htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, _webRequestHeader);
+                        Console.WriteLine(movie.CompleteInfoUrl);
                         var vmMovieLookup = ScrapperMethods.DecodeDetailsVM(htmlDocument);
                         var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument, vmMovieLookup);
-
+                        
                         if (movie.MovieDetails == null)
                         {
                             ConsoleHelper.LogBranch($"New Movie [{i}] - Add New Details");

@@ -10,7 +10,6 @@ namespace PaheScrapper.Models
         }
 
         public string Title { get; set; }
-        public string Notes { get; set; }
         public List<DownloadQuality> DownloadQualities { get; set; }
 
     }

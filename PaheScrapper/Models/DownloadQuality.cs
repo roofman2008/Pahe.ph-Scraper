@@ -10,6 +10,9 @@ namespace PaheScrapper.Models
         }
 
         public string Quality { get; set; }
+        public string Size { get; set; }
+        public string Notes { get; set; }
+
         public List<Link> Links { get; set; }
     }
 }

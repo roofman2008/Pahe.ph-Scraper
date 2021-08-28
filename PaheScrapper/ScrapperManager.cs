@@ -175,8 +175,8 @@ namespace PaheScrapper
                     try
                     {
                         htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, _webRequestHeader);
-                        ScrapperMethods.DecodeDetailsVM(htmlDocument);
-                        var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument);
+                        var vmMovieLookup = ScrapperMethods.DecodeDetailsVM(htmlDocument);
+                        var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument, vmMovieLookup);
 
                         if (movie.MovieDetails == null)
                         {

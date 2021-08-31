@@ -73,6 +73,7 @@
     <Compile Include="Helpers\ProcessHelper.cs" />
     <Compile Include="Helpers\RutimeParser.cs" />
     <Compile Include="Helpers\UriHelper.cs" />
+    <Compile Include="Helpers\VMDecoder.cs" />
     <Compile Include="Helpers\WebDriverHelper.cs" />
     <Compile Include="Helpers\WindowHelper.cs" />
     <Compile Include="Models\DownloadQuality.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="Models\MovieDetails.cs" />
     <Compile Include="Models\MovieEpisode.cs" />
     <Compile Include="Models\MovieSummery.cs" />
+    <Compile Include="Models\VMMovieLookup.cs" />
     <Compile Include="Models\WebsiteContext.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

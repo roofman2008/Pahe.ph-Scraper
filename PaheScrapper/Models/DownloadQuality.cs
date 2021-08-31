@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace PaheScrapper.Models
 {
@@ -11,6 +10,10 @@ namespace PaheScrapper.Models
         }
 
         public string Quality { get; set; }
+        public string Size { get; set; }
+        public string Notes { get; set; }
+        public bool HasError { get; set; }
+
         public List<Link> Links { get; set; }
     }
 }

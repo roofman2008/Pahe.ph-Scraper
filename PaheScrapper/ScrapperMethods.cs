@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using HtmlAgilityPack;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
-using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.PageObjects;
 using OpenQA.Selenium.Support.UI;
 using PaheScrapper.Helpers;
@@ -19,7 +18,7 @@ namespace PaheScrapper
 {
     public static class ScrapperMethods
     {
-        public static int ScrapePagesCount(HtmlDocument document)
+        public static int PagesCount(HtmlDocument document)
         {
             var docNode = document.DocumentNode;
             var paginationNode = docNode.Descendants().SingleByNameNClass("div", "pagination");
@@ -30,7 +29,7 @@ namespace PaheScrapper
             return pagesNo;
         }
 
-        public static IEnumerable<MovieSummery> ScrapeMoviesList(HtmlDocument document)
+        public static IEnumerable<MovieSummery> MoviesList(HtmlDocument document)
         {
             List<MovieSummery> movieSummeries = new List<MovieSummery>();
 
@@ -74,7 +73,7 @@ namespace PaheScrapper
             return movieSummeries;
         }
 
-        public static MovieDetails ScrapeMovieDetails(HtmlDocument document)
+        public static MovieDetails MovieDetails(HtmlDocument document, VMMovieLookup vmMovieLookup)
         {
             MovieDetails details = new MovieDetails();
 
@@ -125,9 +124,9 @@ namespace PaheScrapper
                 var directorsNode = imdbFooter.Descendants().FirstOrDefault(l=>l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
                 var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Actors:")?.NextSibling.NextSibling;
                 details.IMDBDirectors =
-                    directorsNode?.InnerText.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    directorsNode?.InnerText.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(l=>l.TrimStart().TrimEnd()).ToList();
                 details.IMDBActors =
-                    actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
             }
 
             Console.BackgroundColor = ConsoleColor.Gray;
@@ -178,33 +177,60 @@ namespace PaheScrapper
                     : null;
             }
 
-            if (docNode.Descendants().CountByNameNClass("div", "box download  ") == 1)
+            void ProcessDownloadBox(MovieDetails tmp_details, HtmlNode tmp_downloadNode, string tabName)
             {
-                var downloadNode = docNode.Descendants().SingleByNameNClass("div", "box download  ");
+                var downloadInnerNode = tmp_downloadNode.Descendants().SingleByNameNClass("div", "box-inner-block");
+                downloadInnerNode.Descendants()
+                    .SingleOrDefaultByNameNClass("i", "fa tie-shortcode-boxicon")?.Remove();
+                downloadInnerNode.Descendants().Where(l => l.Name == "a").ToList().ForEach(l=> { l?.Remove(); });
 
-                var downloadInnerNode = downloadNode.Descendants().SingleByNameNClass("div", "box-inner-block");
-                var unwantedNode = downloadInnerNode.Descendants().SingleOrDefaultByNameNClass("i", "fa tie-shortcode-boxicon");
-                unwantedNode?.Remove();
-                var downloadHtmls = downloadInnerNode.InnerHtml
-                    .Replace("<br>", "")
+                var downloadHtmls = downloadInnerNode.InnerHtml.Replace("<br>", "")
                     .Replace("</p>", "")
                     .Replace("<p><b>", "<p><b><b>")
-                    .TrimStart().TrimEnd()
-                    .Split(new string[] {"&nbsp;\n", "<p><b>" }, StringSplitOptions.RemoveEmptyEntries);
+                    .TrimStart()
+                    .TrimEnd()
+                    .Split(new string[] {"&nbsp;\n", "<p><b>"}, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(l=>l.TrimStart().TrimEnd() != "&nbsp;" && !string.IsNullOrEmpty(l))
+                    .ToArray();
 
-                downloadHtmls = downloadHtmls.Where(l => !l.Contains("&nbsp;") && l.Contains("<a") && l.Contains("<b>")).ToArray();
-
-                MovieEpisode episode = new MovieEpisode()
+                /*Fix Array Split*/
+                List<string> downloadHtmlsList = new List<string>();
+                for(int i=0;i<downloadHtmls.Length;i++)
                 {
-                    Title = null
-                };
+                    if (i == 0)
+                    {
+                        downloadHtmlsList.Add(downloadHtmls[i]);
+                    }
+                    else
+                    {
+                        if (downloadHtmls[i].Length >= 4)
+                        {
+                            var template = downloadHtmls[i].Substring(0, 4);
+                            if (template == "{{--")
+                            {
+                                downloadHtmlsList[i- 1] = downloadHtmlsList[i - 1] + downloadHtmls[i];
+                            }
+                            else
+                            {
+                                downloadHtmlsList.Add(downloadHtmls[i]);
+                            }
+                        }
+                    }
+                }
+
+                downloadHtmls = downloadHtmlsList.ToArray();
+
+                MovieEpisode episode = new MovieEpisode() {Title = tabName};
+                string qualityNote = null;
 
                 foreach (var downloadHtml in downloadHtmls)
                 {
+                    var tmp_downloadHtml = downloadHtml.Replace("&nbsp;", "").TrimStart().TrimEnd();
+
                     MemoryStream ms = new MemoryStream();
                     TextWriter tw = new StreamWriter(ms);
 
-                    tw.Write(downloadHtml);
+                    tw.Write(tmp_downloadHtml);
                     tw.Flush();
                     ms.Position = 0;
 
@@ -218,117 +244,264 @@ namespace PaheScrapper
                     tr.Dispose();
                     tw.Dispose();
 
-                    var qualityNode = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.Name == "b");
-                    var downloadLinkNodes = tmpDoc.DocumentNode.Descendants().Where(l => l.Name == "a");
+                    if (tmpDoc.DocumentNode.Descendants().Count(l => l.Name == "span" || l.Name=="em" || l.Name == "strong" || l.Name == "#text") > 0)
+                    {
+                        if (!tmpDoc.DocumentNode.InnerText.Contains("{{"))
+                            qualityNote = tmpDoc.DocumentNode.InnerText.TrimStart().TrimEnd();
+                        else if (tmpDoc.DocumentNode.Descendants()
+                                     .Count(l => l.Name == "span" || l.Name == "em" || l.Name == "strong") > 0 && !tmpDoc.DocumentNode.InnerText.Contains("|") && !tmpDoc.DocumentNode.InnerText.Contains("{{"))
+                            qualityNote = tmpDoc.DocumentNode.Descendants()
+                                .SingleOrDefault(l => l.Name == "span" || l.Name == "em" || l.Name == "strong").InnerText.TrimStart().TrimEnd();
+
+                        tmpDoc.DocumentNode.Descendants().Where(l => l.Name == "em" || l.Name == "span" || l.Name == "strong" &&
+                                                                     !tmpDoc.DocumentNode.InnerText.Contains("|") && !tmpDoc.DocumentNode.InnerText.Contains("{{")).ToList().ForEach(l => { l?.Remove(); });
+
+                        if (string.IsNullOrEmpty(tmpDoc.DocumentNode.InnerText.TrimStart().TrimEnd()) || !tmpDoc.DocumentNode.InnerText.Contains("{{"))
+                            continue;
+                    }
+
+                    var qualityNode = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.Name == "b" || l.Name == "strong");
+                    var downloadLinkQualityInfo = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => !l.InnerText.Contains("{{"));
+                    var downloadLinkInfo = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.InnerText.Contains("{{"));
+                    var downloadLinkNodes = downloadLinkInfo.InnerText.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
+
+                    var quality1 = qualityNode?.InnerText;
+                    quality1 = string.IsNullOrEmpty(quality1) ? null : quality1;
+                    var quality2 = downloadLinkNodes.FirstOrDefault(l => !l.Contains("{{"))?
+                        .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?
+                        .TrimStart()
+                        .TrimEnd();
+                    quality2 = string.IsNullOrEmpty(quality2) ? null : quality2;
+                    var quality3 = downloadLinkQualityInfo?
+                        .InnerText
+                        .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?
+                        .TrimStart()
+                        .TrimEnd();
+                    quality3 = string.IsNullOrEmpty(quality3) ? null : quality3;
+                    bool sizeAvailable = false;
+                    var size1 = downloadLinkNodes.FirstOrDefault(l => !l.Contains("{{"))?
+                        .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Replace("~", "")
+                        .TrimStart()
+                        .TrimEnd();
+                    size1 = size1 != null && !size1.ToLower().Contains("gb") && !size1.ToLower().Contains("mb") ? null : size1;
+                    if (size1 != null && size1.IndexOf("(") > -1)
+                        size1 = size1?.Substring(0, size1.IndexOf("("));
+                    if (size1 != null && size1.ToLower().Contains("mb") && size1.ToLower().Contains("gb") && size1.Contains("/"))
+                    {
+                        size1 = size1.ToLower()?.Replace("mb", "");
+                        size1 = size1.ToLower()?.Replace("/", "");
+                    }
+
+                    float sizeInNumber;
+                    sizeAvailable |= size1 != null && float.TryParse(size1.ToLower()
+                        .Replace("gb", "")
+                        .Replace("mb", "")
+                        .Replace("tb", "")
+                        .Replace("kb", "")
+                        .TrimStart()
+                        .TrimEnd(), out sizeInNumber);
+                    var size2 = downloadLinkQualityInfo?.InnerText
+                        .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Replace("~", "")
+                        .TrimStart()
+                        .TrimEnd();
+                    size2 = size2 != null && !size2.ToLower().Contains("gb") && !size2.ToLower().Contains("mb") ? null : size2;
+                    if (size2 != null && size2.IndexOf("(") > -1)
+                        size2 = size2?.Substring(0, size2.IndexOf("("));
+                    if (size2 != null && size2.ToLower().Contains("mb") && size2.ToLower().Contains("gb") && size2.Contains("/"))
+                    {
+                        size2 = size2?.ToLower().Replace("mb", "");
+                        size2 = size2?.ToLower().Replace("/", "");
+                    }
+                    sizeAvailable |= size2 != null && float.TryParse(size2.ToLower()
+                        .Replace("gb", "")
+                        .Replace("mb", "")
+                        .Replace("tb", "")
+                        .Replace("kb", "")
+                        .TrimStart()
+                        .TrimEnd(), out sizeInNumber);
 
                     DownloadQuality downloadQuality = new DownloadQuality()
                     {
-                        Quality = qualityNode.InnerText
+                        Quality = quality1 ??
+                                  quality2 ??
+                                  quality3,
+                        Size = sizeAvailable ? 
+                            size1 ?? size2 : null,
+                        Notes = qualityNote
                     };
+
+                    if (downloadQuality.Quality == null || downloadQuality.Size == null)
+                        downloadQuality.HasError = true;
+
+                    if (qualityNote != null)
+                        qualityNote = null;
+
+                    downloadLinkNodes = downloadLinkNodes.Where(l => l.Contains("{{")).ToArray();
 
                     foreach (var downloadLinkNode in downloadLinkNodes)
                     {
-                        downloadQuality.Links.Add(new Link()
-                        {
-                            Title = downloadLinkNode.InnerText,
-                            Url = downloadLinkNode.Attributes["href"].Value
-                        });
+                        downloadQuality.Links.Add(new Link() {Title = vmMovieLookup.GetByButtonId(downloadLinkNode).ButtonName, Url = vmMovieLookup.GetByButtonId(downloadLinkNode).Url});
                     }
 
                     episode.DownloadQualities.Add(downloadQuality);
+                    //Console.WriteLine($"Q|={downloadQuality.Quality}\n\tS|={downloadQuality.Size}\n\t\tN|={downloadQuality.Notes}");
                 }
 
-                details.Episodes.Add(episode);
+                tmp_details.Episodes.Add(episode);
             }
-            else if (docNode.Descendants().CountByNameNClass("div", "box download  ") >= 1)
+
+            void ProcessSingleDownloadBox(MovieDetails tmp_details, HtmlNode tmp_docNode, string tabName)
+            {
+                var downloadNode = tmp_docNode.Descendants().SingleByNameNClass("div", "box download  ");
+                ProcessDownloadBox(tmp_details, downloadNode, tabName);
+            }
+
+            void ProcessMultipleDownloadBox(MovieDetails tmp_details, HtmlNode tmp_docNode, string tabName)
+            {
+                var downloadNodes = tmp_docNode.Descendants().FindByNameNClass("div", "box download  ");
+                foreach (var downloadNode in downloadNodes)
+                {
+                    ProcessDownloadBox(tmp_details, downloadNode, tabName);
+                }
+            }
+
+            void ProcessMultiplePanesBox(MovieDetails tmp_details, HtmlNode tmp_docNode)
             {
                 int index = 0;
-                var tabsNodes = docNode
+                var tabsNodes = tmp_docNode
                     .Descendants().FindByNameNClass("ul", "tabs-nav")
-                    .SelectMany(l=>l.Descendants("li"));
-                var paneNodes = docNode.Descendants().FindByNameNClass("div", "pane").Take(tabsNodes.Count());
+                    .SelectMany(l => l.Descendants("li")).ToList();
 
-                foreach (var paneNode in paneNodes)
+                if (!tabsNodes.Any())
                 {
-                    var downloadNodes = paneNode.Descendants().FindByNameNClass("div", "box download  ");
+                    ProcessMultipleDownloadBox(tmp_details, tmp_docNode, null);
+                }
+                else
+                {
+                    var paneNodes = docNode.Descendants().FindByNameNClass("div", "pane").Take(tabsNodes.Count());
 
-                    foreach (var downloadNode in downloadNodes)
+                    foreach (var paneNode in paneNodes)
                     {
-                        var downloadInnerNode = downloadNode.Descendants().SingleByNameNClass("div", "box-inner-block");
-                        var episodeTitle = downloadNode.Descendants().FirstOrDefault(l => l.Name == "span" || l.Name == "b" || l.Name == "strong");
-                        var episodeTitleExtra = downloadNode.Descendants().FirstOrDefault(l => l.Name == "span" || l.Name == "b" || l.Name == "strong")?.NextSibling;
-                        var unwantedNode = downloadInnerNode.Descendants().SingleOrDefaultByNameNClass("i", "fa tie-shortcode-boxicon");
-                        episodeTitle?.Remove();
-                        episodeTitleExtra?.Remove();
-                        unwantedNode?.Remove();
-                        var downloadHtmls = downloadInnerNode.InnerHtml
-                            .Replace("<br>", "")
-                            .Replace("</p>", "")
-                            .Replace("<p><b>", "<p><b><br>")
-                            .TrimStart().TrimEnd()
-                            .Split(new string[] { "&nbsp;\n", "<p>" }, StringSplitOptions.RemoveEmptyEntries);
+                        var downloadNodes = paneNode.Descendants().FindByNameNClass("div", "box download  ");
 
-                        downloadHtmls = downloadHtmls.Where(l => !l.Contains("&nbsp;") && l.Contains("<a")).ToArray();
-
-                        MovieEpisode episode = new MovieEpisode()
+                        foreach (var downloadNode in downloadNodes)
                         {
-                            Title = tabsNodes.Skip(index).Take(1).First().InnerText,
-                            Notes = episodeTitle?.InnerText.TrimStart().TrimEnd() + episodeTitleExtra?.InnerText.TrimEnd()
-                        };
-
-                        foreach (var downloadHtml in downloadHtmls)
-                        {
-                            MemoryStream ms = new MemoryStream();
-                            TextWriter tw = new StreamWriter(ms);
-
-                            tw.Write(downloadHtml);
-                            tw.Flush();
-                            ms.Position = 0;
-
-                            TextReader tr = new StreamReader(ms);
-                            HtmlDocument tmpDoc = new HtmlDocument();
-                            tmpDoc.Load(tr);
-                            tmpDoc.DocumentNode.Descendants().Where(l => l.Name == "span").ToList()
-                                .ForEach(l => l.Remove());
-                            tr.Close();
-                            tw.Close();
-                            ms.Close();
-                            ms.Dispose();
-                            tr.Dispose();
-                            tw.Dispose();
-
-                            var qualityNode = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.Name == "b");
-                            var downloadLinkNodes = tmpDoc.DocumentNode.Descendants().Where(l => l.Name == "a");
-
-                            DownloadQuality downloadQuality = new DownloadQuality()
-                            {
-                                Quality = qualityNode?.InnerText
-                            };
-
-                            foreach (var downloadLinkNode in downloadLinkNodes)
-                            {
-                                downloadQuality.Links.Add(new Link()
-                                {
-                                    Title = downloadLinkNode.InnerText,
-                                    Url = downloadLinkNode.Attributes["href"].Value
-                                });
-                            }
-
-                            episode.DownloadQualities.Add(downloadQuality);
+                            string tabName = tabsNodes.Skip(index).Take(1).First().InnerText;
+                            ProcessDownloadBox(tmp_details, downloadNode, tabName);
                         }
 
-                        details.Episodes.Add(episode);
+                        index++;
                     }
-
-
-                    index++;
                 }
             }
+
+            if (docNode.Descendants().CountByNameNClass("div", "box download  ") == 1)
+                ProcessSingleDownloadBox(details, docNode, null);
+            else if (docNode.Descendants().CountByNameNClass("div", "box download  ") >= 1)
+                ProcessMultiplePanesBox(details, docNode);
 
             return details;
         }
 
-        public static WebRequestHeader ScrapeBypassSurcuri(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
+        public static VMMovieLookup DecodeDetailsVM(HtmlDocument document)
+        {
+            string documentHtml = string.Empty;
+            int startIndex = 0;
+            int endIndex = 0;
+            string startPattern = "";
+            string endPattern = "";
+
+            documentHtml = document.ParsedText;
+
+            if (string.IsNullOrEmpty(documentHtml))
+                return null;
+
+            //Get VM Decoder Parameters
+            startPattern = "return decodeURIComponent(escape(r))";
+            endPattern = "))";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal) + 2;
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(0, endIndex);
+            documentHtml = documentHtml.Replace("\"", "");
+            var vmVariables = documentHtml.Split(new []{','});
+            var decodedHtml = VMDecoder.eval(vmVariables[0], int.Parse(vmVariables[1]), vmVariables[2], int.Parse(vmVariables[3]),
+                int.Parse(vmVariables[4]), int.Parse(vmVariables[5]));
+
+            //Movie Array Id
+            documentHtml = decodedHtml;
+            startPattern = "location.href=";
+            endPattern = "[";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(0, endIndex);
+            string movieArrayId = documentHtml;
+
+            //Movie Array Object
+            documentHtml = decodedHtml;
+            startPattern = movieArrayId+"=";
+            endPattern = "};";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) + 1;
+            documentHtml = documentHtml.Substring(0, endIndex);
+            JObject linksObject = JObject.Parse(documentHtml);
+            IEnumerable<JToken> linksTokens = linksObject.Properties().Select(l => l.Value).ToArray();
+            string[] linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();
+
+            //Movie Page Links Buttons
+            List<string> buttonNames = new List<string>();
+            documentHtml = decodedHtml;
+            startPattern = "if (counter== 0){";
+            endPattern = "} else {";
+            startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal) + 1;
+            documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+            endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) - 1;
+            documentHtml = documentHtml.Substring(0, endIndex);
+            string[] buttonsHtmlArray = documentHtml.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries);
+            var buttonsObjects = buttonsHtmlArray.Select(l =>
+            {
+                documentHtml = l;
+                startPattern = "a.innerHTML=a.innerHTML.replace(`";
+                endPattern = "`,";
+                startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
+                documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+                endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
+                documentHtml = documentHtml.Substring(0, endIndex);
+                string buttonId = documentHtml;
+
+                documentHtml = l;
+                startPattern = "\">";
+                endPattern = "</";
+                startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
+                documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
+                endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
+                documentHtml = documentHtml.Substring(0, endIndex);
+                var buttonName = documentHtml.TrimStart().TrimEnd();
+
+                return new
+                {
+                    ButtonId = buttonId,
+                    ButtonName = buttonName
+                };
+            }).ToArray();
+
+            VMMovieLookup vmMovieLookup = new VMMovieLookup();
+            for (int i = 0; i < linksArray.Length; i++)
+            {
+                vmMovieLookup.Add(linksArray[i], buttonsObjects[i].ButtonId, buttonsObjects[i].ButtonName);
+            }
+            return vmMovieLookup;
+        }
+
+        public static WebRequestHeader BypassSurcuri(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
         {
             int timeout = 30; /*sec*/
 
@@ -341,7 +514,7 @@ namespace PaheScrapper
                 return null;
         }
 
-        public static string ScrapeMoviesTrueLinks(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
+        public static string MoviesTrueLinks(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
         {
             int taskTimeout = Configuration.Default.WebDriveTaskTimeout; /*sec*/
             int timeout = 30; /*sec*/

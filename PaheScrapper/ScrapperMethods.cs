@@ -124,9 +124,9 @@ namespace PaheScrapper
                 var directorsNode = imdbFooter.Descendants().FirstOrDefault(l=>l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
                 var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Actors:")?.NextSibling.NextSibling;
                 details.IMDBDirectors =
-                    directorsNode?.InnerText.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    directorsNode?.InnerText.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(l=>l.TrimStart().TrimEnd()).ToList();
                 details.IMDBActors =
-                    actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
             }
 
             Console.BackgroundColor = ConsoleColor.Gray;
@@ -223,7 +223,6 @@ namespace PaheScrapper
                 MovieEpisode episode = new MovieEpisode() {Title = tabName};
                 string qualityNote = null;
 
-
                 foreach (var downloadHtml in downloadHtmls)
                 {
                     var tmp_downloadHtml = downloadHtml.Replace("&nbsp;", "").TrimStart().TrimEnd();
@@ -250,18 +249,18 @@ namespace PaheScrapper
                         if (!tmpDoc.DocumentNode.InnerText.Contains("{{"))
                             qualityNote = tmpDoc.DocumentNode.InnerText.TrimStart().TrimEnd();
                         else if (tmpDoc.DocumentNode.Descendants()
-                                     .Count(l => l.Name == "span" || l.Name == "em" || l.Name == "strong") > 0 && !tmpDoc.DocumentNode.InnerText.Contains("|"))
+                                     .Count(l => l.Name == "span" || l.Name == "em" || l.Name == "strong") > 0 && !tmpDoc.DocumentNode.InnerText.Contains("|") && !tmpDoc.DocumentNode.InnerText.Contains("{{"))
                             qualityNote = tmpDoc.DocumentNode.Descendants()
                                 .SingleOrDefault(l => l.Name == "span" || l.Name == "em" || l.Name == "strong").InnerText.TrimStart().TrimEnd();
 
                         tmpDoc.DocumentNode.Descendants().Where(l => l.Name == "em" || l.Name == "span" || l.Name == "strong" &&
-                                                                     !tmpDoc.DocumentNode.InnerText.Contains("|")).ToList().ForEach(l => { l?.Remove(); });
+                                                                     !tmpDoc.DocumentNode.InnerText.Contains("|") && !tmpDoc.DocumentNode.InnerText.Contains("{{")).ToList().ForEach(l => { l?.Remove(); });
 
                         if (string.IsNullOrEmpty(tmpDoc.DocumentNode.InnerText.TrimStart().TrimEnd()) || !tmpDoc.DocumentNode.InnerText.Contains("{{"))
                             continue;
                     }
 
-                    var qualityNode = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.Name == "b");
+                    var qualityNode = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.Name == "b" || l.Name == "strong");
                     var downloadLinkQualityInfo = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => !l.InnerText.Contains("{{"));
                     var downloadLinkInfo = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.InnerText.Contains("{{"));
                     var downloadLinkNodes = downloadLinkInfo.InnerText.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
@@ -284,8 +283,10 @@ namespace PaheScrapper
                         .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Replace("~", "")
                         .TrimStart()
                         .TrimEnd();
+                    size1 = size1 != null && !size1.ToLower().Contains("gb") && !size1.ToLower().Contains("mb") ? null : size1;
                     if (size1 != null && size1.IndexOf("(") > -1)
                         size1 = size1?.Substring(0, size1.IndexOf("("));
                     if (size1 != null && size1.ToLower().Contains("mb") && size1.ToLower().Contains("gb") && size1.Contains("/"))
@@ -306,8 +307,10 @@ namespace PaheScrapper
                         .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Replace("~", "")
                         .TrimStart()
                         .TrimEnd();
+                    size2 = size2 != null && !size2.ToLower().Contains("gb") && !size2.ToLower().Contains("mb") ? null : size2;
                     if (size2 != null && size2.IndexOf("(") > -1)
                         size2 = size2?.Substring(0, size2.IndexOf("("));
                     if (size2 != null && size2.ToLower().Contains("mb") && size2.ToLower().Contains("gb") && size2.Contains("/"))
@@ -334,7 +337,7 @@ namespace PaheScrapper
                     };
 
                     if (downloadQuality.Quality == null || downloadQuality.Size == null)
-                        Debugger.Break();
+                        downloadQuality.HasError = true;
 
                     if (qualityNote != null)
                         qualityNote = null;
@@ -347,7 +350,7 @@ namespace PaheScrapper
                     }
 
                     episode.DownloadQualities.Add(downloadQuality);
-                    Console.WriteLine($"Q|={downloadQuality.Quality}\n\tS|={downloadQuality.Size}\n\t\tN|={downloadQuality.Notes}");
+                    //Console.WriteLine($"Q|={downloadQuality.Quality}\n\tS|={downloadQuality.Size}\n\t\tN|={downloadQuality.Notes}");
                 }
 
                 tmp_details.Episodes.Add(episode);

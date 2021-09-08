@@ -457,7 +457,6 @@ namespace PaheScrapper
             string[] linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();
 
             //Movie Page Links Buttons
-            List<string> buttonNames = new List<string>();
             documentHtml = decodedHtml;
             startPattern = "if (counter== 0){";
             endPattern = "} else {";

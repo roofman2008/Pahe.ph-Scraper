@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.PageObjects;
@@ -64,7 +62,7 @@ namespace PaheScrapper
                 movieSummery.CommentsNo = commentsNode.InnerText.Contains("Comments Off")
                     ? 0
                     : int.Parse(commentsNode.InnerText.Replace(",", ""));
-                movieSummery.Tags = tagsNode.InnerText.Split(new char[] {','}, StringSplitOptions.RemoveEmptyEntries).ToList();
+                movieSummery.Tags = tagsNode.InnerText.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                 movieSummery.MovieDetails = null;
 
                 movieSummeries.Add(movieSummery);
@@ -82,7 +80,7 @@ namespace PaheScrapper
             var imdbRate = docNode.Descendants().SingleOrDefaultByNameNClass("span", "imdbwp__rating");
             var imdbDescription = docNode.Descendants().SingleOrDefaultByNameNClass("div", "imdbwp__teaser");
             var imdbFooter = docNode.Descendants().SingleOrDefaultByNameNClass("div", "imdbwp__footer");
-            
+
             if (imdbNode != null)
             {
                 details.IMDBName = imdbNode.Attributes["title"].Value;
@@ -121,10 +119,10 @@ namespace PaheScrapper
 
             if (imdbFooter != null)
             {
-                var directorsNode = imdbFooter.Descendants().FirstOrDefault(l=>l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
+                var directorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
                 var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Actors:")?.NextSibling.NextSibling;
                 details.IMDBDirectors =
-                    directorsNode?.InnerText.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries).Select(l=>l.TrimStart().TrimEnd()).ToList();
+                    directorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
                 details.IMDBActors =
                     actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
             }
@@ -150,10 +148,10 @@ namespace PaheScrapper
                 var trailerNode = detailsNode.Descendants().SingleOrDefault(l => l.InnerText.Contains("Trailer ."))
                     ?.NextSibling;
 
-                details.FileType = fileNode?.InnerText.Split(new char[] {':'})[1].TrimStart().TrimEnd();
-                details.Runtime = RuntimeParser.Parse(runtimeNode?.InnerText.Split(new char[] {':'})[1]);
-                details.Subtitles = subtitlesNode?.InnerText.Split(new char[] {':'})[1].TrimStart().TrimEnd();
-                details.Chatper = chapterNode?.InnerText.Split(new char[] {':'})[1].TrimStart().TrimEnd();
+                details.FileType = fileNode?.InnerText.Split(new char[] { ':' })[1].TrimStart().TrimEnd();
+                details.Runtime = RuntimeParser.Parse(runtimeNode?.InnerText.Split(new char[] { ':' })[1]);
+                details.Subtitles = subtitlesNode?.InnerText.Split(new char[] { ':' })[1].TrimStart().TrimEnd();
+                details.Chatper = chapterNode?.InnerText.Split(new char[] { ':' })[1].TrimStart().TrimEnd();
                 details.SubsceneLink = subsceneLinkNode != null && subsceneLinkNode.Name == "a"
                     ? new Link()
                     {
@@ -182,20 +180,20 @@ namespace PaheScrapper
                 var downloadInnerNode = tmp_downloadNode.Descendants().SingleByNameNClass("div", "box-inner-block");
                 downloadInnerNode.Descendants()
                     .SingleOrDefaultByNameNClass("i", "fa tie-shortcode-boxicon")?.Remove();
-                downloadInnerNode.Descendants().Where(l => l.Name == "a").ToList().ForEach(l=> { l?.Remove(); });
+                downloadInnerNode.Descendants().Where(l => l.Name == "a").ToList().ForEach(l => { l?.Remove(); });
 
                 var downloadHtmls = downloadInnerNode.InnerHtml.Replace("<br>", "")
                     .Replace("</p>", "")
                     .Replace("<p><b>", "<p><b><b>")
                     .TrimStart()
                     .TrimEnd()
-                    .Split(new string[] {"&nbsp;\n", "<p><b>"}, StringSplitOptions.RemoveEmptyEntries)
-                    .Where(l=>l.TrimStart().TrimEnd() != "&nbsp;" && !string.IsNullOrEmpty(l))
+                    .Split(new string[] { "&nbsp;\n", "<p><b>" }, StringSplitOptions.RemoveEmptyEntries)
+                    .Where(l => l.TrimStart().TrimEnd() != "&nbsp;" && !string.IsNullOrEmpty(l))
                     .ToArray();
 
                 /*Fix Array Split*/
                 List<string> downloadHtmlsList = new List<string>();
-                for(int i=0;i<downloadHtmls.Length;i++)
+                for (int i = 0; i < downloadHtmls.Length; i++)
                 {
                     if (i == 0)
                     {
@@ -208,7 +206,7 @@ namespace PaheScrapper
                             var template = downloadHtmls[i].Substring(0, 4);
                             if (template == "{{--")
                             {
-                                downloadHtmlsList[i- 1] = downloadHtmlsList[i - 1] + downloadHtmls[i];
+                                downloadHtmlsList[i - 1] = downloadHtmlsList[i - 1] + downloadHtmls[i];
                             }
                             else
                             {
@@ -220,7 +218,7 @@ namespace PaheScrapper
 
                 downloadHtmls = downloadHtmlsList.ToArray();
 
-                MovieEpisode episode = new MovieEpisode() {Title = tabName};
+                MovieEpisode episode = new MovieEpisode() { Title = tabName };
                 string qualityNote = null;
 
                 foreach (var downloadHtml in downloadHtmls)
@@ -244,7 +242,7 @@ namespace PaheScrapper
                     tr.Dispose();
                     tw.Dispose();
 
-                    if (tmpDoc.DocumentNode.Descendants().Count(l => l.Name == "span" || l.Name=="em" || l.Name == "strong" || l.Name == "#text") > 0)
+                    if (tmpDoc.DocumentNode.Descendants().Count(l => l.Name == "span" || l.Name == "em" || l.Name == "strong" || l.Name == "#text") > 0)
                     {
                         if (!tmpDoc.DocumentNode.InnerText.Contains("{{"))
                             qualityNote = tmpDoc.DocumentNode.InnerText.TrimStart().TrimEnd();
@@ -263,24 +261,24 @@ namespace PaheScrapper
                     var qualityNode = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.Name == "b" || l.Name == "strong");
                     var downloadLinkQualityInfo = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => !l.InnerText.Contains("{{"));
                     var downloadLinkInfo = tmpDoc.DocumentNode.Descendants().LastOrDefault(l => l.InnerText.Contains("{{"));
-                    var downloadLinkNodes = downloadLinkInfo.InnerText.Split(new[] {'\n'}, StringSplitOptions.RemoveEmptyEntries);
+                    var downloadLinkNodes = downloadLinkInfo.InnerText.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                     var quality1 = qualityNode?.InnerText;
                     quality1 = string.IsNullOrEmpty(quality1) ? null : quality1;
                     var quality2 = downloadLinkNodes.FirstOrDefault(l => !l.Contains("{{"))?
-                        .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?
+                        .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?
                         .TrimStart()
                         .TrimEnd();
                     quality2 = string.IsNullOrEmpty(quality2) ? null : quality2;
                     var quality3 = downloadLinkQualityInfo?
                         .InnerText
-                        .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?
+                        .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?
                         .TrimStart()
                         .TrimEnd();
                     quality3 = string.IsNullOrEmpty(quality3) ? null : quality3;
                     bool sizeAvailable = false;
                     var size1 = downloadLinkNodes.FirstOrDefault(l => !l.Contains("{{"))?
-                        .Split(new[] {'|'}, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
+                        .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Split(new[] { '-' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Split(new[] { '+' }, StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?
                         .Replace("~", "")
@@ -331,7 +329,7 @@ namespace PaheScrapper
                         Quality = quality1 ??
                                   quality2 ??
                                   quality3,
-                        Size = sizeAvailable ? 
+                        Size = sizeAvailable ?
                             size1 ?? size2 : null,
                         Notes = qualityNote
                     };
@@ -346,7 +344,7 @@ namespace PaheScrapper
 
                     foreach (var downloadLinkNode in downloadLinkNodes)
                     {
-                        downloadQuality.Links.Add(new Link() {Title = vmMovieLookup.GetByButtonId(downloadLinkNode).ButtonName, Url = vmMovieLookup.GetByButtonId(downloadLinkNode).Url});
+                        downloadQuality.Links.Add(new Link() { Title = vmMovieLookup.GetByButtonId(downloadLinkNode).ButtonName, Url = vmMovieLookup.GetByButtonId(downloadLinkNode).Url });
                     }
 
                     episode.DownloadQualities.Add(downloadQuality);
@@ -430,7 +428,7 @@ namespace PaheScrapper
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal);
             documentHtml = documentHtml.Substring(0, endIndex);
             documentHtml = documentHtml.Replace("\"", "");
-            var vmVariables = documentHtml.Split(new []{','});
+            var vmVariables = documentHtml.Split(new[] { ',' });
             var decodedHtml = VMDecoder.eval(vmVariables[0], int.Parse(vmVariables[1]), vmVariables[2], int.Parse(vmVariables[3]),
                 int.Parse(vmVariables[4]), int.Parse(vmVariables[5]));
 
@@ -446,7 +444,7 @@ namespace PaheScrapper
 
             //Movie Array Object
             documentHtml = decodedHtml;
-            startPattern = movieArrayId+"=";
+            startPattern = movieArrayId + "=";
             endPattern = "};";
             startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
             documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
@@ -464,7 +462,7 @@ namespace PaheScrapper
             documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) - 1;
             documentHtml = documentHtml.Substring(0, endIndex);
-            string[] buttonsHtmlArray = documentHtml.Split(new[] {';'}, StringSplitOptions.RemoveEmptyEntries);
+            string[] buttonsHtmlArray = documentHtml.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
             var buttonsObjects = buttonsHtmlArray.Select(l =>
             {
                 documentHtml = l;
@@ -523,7 +521,7 @@ namespace PaheScrapper
             semaphore.WaitOne();
             handles.Push(windows[currentWindow]);
             var url = driver.SwitchTo().Window(handles.Peek()).Url.ToLower();
-            semaphore.Release();          
+            semaphore.Release();
 
             while (true)
             {
@@ -570,11 +568,15 @@ namespace PaheScrapper
                     throw new Exception("Website is down");
                 }
 
+                semaphore.Release();
+
                 if (url.Contains("lonelymoon") || url.Contains("intercelestial") || url.Contains("sweetlantern"))
                 {
+                    semaphore.WaitOne();
+
                     if (driver.SwitchTo().Window(handles.Peek()).PageSource.Contains("Redirect to nowhere"))
                     {
-                        foreach(var handle in handles)
+                        foreach (var handle in handles)
                             if (handle != windows[currentWindow])
                                 driver.SwitchTo().Window(handle).Close();
 
@@ -582,11 +584,17 @@ namespace PaheScrapper
                         handles.Push(windows[currentWindow]);
 
                         semaphore.Release();
+
                         return "Link Expired";
                     }
 
-                    if (driver.SwitchTo().Window(handles.Peek()).PageSource.Contains("Please verify that you are human"))
+                    semaphore.Release();
+
+                    //if (driver.SwitchTo().Window(handles.Peek()).PageSource.Contains("Please verify that you are human"))
                     {
+                        retry1:
+                        semaphore.WaitOne();
+
                         var elements = driver.SwitchTo().Window(handles.Peek())
                             .FindElements(new ByAll(By.TagName("div"), By.ClassName("wait")));
 
@@ -596,7 +604,7 @@ namespace PaheScrapper
                             {
                                 semaphore.Release();
                                 Thread.Sleep(10);
-                                continue;
+                                goto retry1;
                             }
                             else
                             {
@@ -631,7 +639,6 @@ namespace PaheScrapper
 
                             capachaElement.Click();
                             semaphore.Release();
-                            continue;
                         }
                         else
                         {
@@ -647,6 +654,9 @@ namespace PaheScrapper
                     }
 
                     {
+                        retry2:
+                        semaphore.WaitOne();
+
                         var elements = driver.SwitchTo().Window(handles.Peek())
                             .FindElements(new ByAll(By.TagName("a"), By.Id("generater")));
 
@@ -656,7 +666,7 @@ namespace PaheScrapper
                             {
                                 semaphore.Release();
                                 Thread.Sleep(10);
-                                continue;
+                                goto retry2;
                             }
                             else
                             {
@@ -690,6 +700,7 @@ namespace PaheScrapper
                             }
 
                             generatorElement.Click();
+                            semaphore.Release();
                         }
                         else
                         {
@@ -705,6 +716,9 @@ namespace PaheScrapper
                     }
 
                     {
+                        retry3:
+                        semaphore.WaitOne();
+
                         var elements = driver.SwitchTo().Window(handles.Peek())
                             .FindElements(new ByAll(By.TagName("img"), By.Id("showlink")));
 
@@ -714,7 +728,7 @@ namespace PaheScrapper
                             {
                                 semaphore.Release();
                                 Thread.Sleep(10);
-                                continue;
+                                goto retry3;
                             }
                             else
                             {
@@ -754,10 +768,15 @@ namespace PaheScrapper
 
                         var newHandle = driver.WindowHandles.First(l => oldHandles.All(s => s != l));
                         handles.Push(newHandle);
+
+                        semaphore.Release();
                     }
                 }
-                else if (url.Contains("spacetica"))
+
+                else if (url.Contains("spacetica") || url.Contains("linegee"))
                 {
+                    semaphore.WaitOne();
+
                     var pageSource_TMP = driver.SwitchTo().Window(handles.Peek()).PageSource.ToLower();
                     if (pageSource_TMP.Contains("404") && pageSource_TMP.Contains("not found"))
                     {
@@ -769,8 +788,14 @@ namespace PaheScrapper
                         handles.Push(windows[currentWindow]);
 
                         semaphore.Release();
+
                         return "Link Expired";
                     }
+
+                    semaphore.Release();
+
+                    retry4:
+                    semaphore.WaitOne();
 
                     var elements = driver.SwitchTo().Window(handles.Peek()).FindElements(new ByAll(By.TagName("a"), By.LinkText("Continue")));
 
@@ -778,7 +803,7 @@ namespace PaheScrapper
                     {
                         /*Need Unlock*/
                         if (driver.SwitchTo().Window(handles.Peek())
-                                .FindElements(new ByAll(By.TagName("button"))).Count(l=>l.Text == "Unlock") == 1)
+                                .FindElements(new ByAll(By.TagName("button"))).Count(l => l.Text == "Unlock") == 1)
                         {
                             foreach (var handle in handles)
                                 if (handle != windows[currentWindow])
@@ -796,7 +821,7 @@ namespace PaheScrapper
                         {
                             semaphore.Release();
                             Thread.Sleep(10);
-                            continue;
+                            goto retry4;
                         }
                         else
                         {
@@ -826,7 +851,8 @@ namespace PaheScrapper
 
                     return downloadLink;
                 }
-                else if (url == "about:blank" || String.IsNullOrEmpty(url))
+
+                else if (url == "about:blank" || String.IsNullOrEmpty(url) || url.Contains("pahe.ph"))
                 {
                     if (DateTime.Now.Subtract(loginTime).TotalSeconds < taskTimeout)
                     {
@@ -844,9 +870,10 @@ namespace PaheScrapper
                         throw new Exception("Website has error");
                     }
                 }
+
                 else
                 {
-                    var otherUrl = driver.SwitchTo().Window(handles.Peek()).Url;
+                    var otherUrl = url;
 
                     foreach (var handle in handles)
                         if (handle != windows[currentWindow])
@@ -855,11 +882,10 @@ namespace PaheScrapper
                     handles.Clear();
                     handles.Push(windows[currentWindow]);
 
-                    semaphore.Release();
-
                     return otherUrl;
                 }
 
+                semaphore.WaitOne();
                 url = driver.SwitchTo().Window(handles.Peek()).Url;
                 semaphore.Release();
             }

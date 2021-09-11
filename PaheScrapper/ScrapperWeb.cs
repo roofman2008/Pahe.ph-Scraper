@@ -226,6 +226,7 @@ namespace PaheScrapper
             }
             catch (Exception e)
             {
+                semaphore.WaitOne(1);
                 semaphore.Release();
                 throw;
             }

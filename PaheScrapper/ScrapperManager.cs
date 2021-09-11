@@ -330,8 +330,6 @@ namespace PaheScrapper
                 saveState(_scrapperState);
             }
 
-            _scrapperState = ScrapperState.Complete;
-
             if (_scrapperState == ScrapperState.Sora)
             {
                 int scrapperInstance = Configuration.Default.WebDriveInstances;

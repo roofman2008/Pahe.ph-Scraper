@@ -854,6 +854,8 @@ namespace PaheScrapper
 
                 else if (url == "about:blank" || String.IsNullOrEmpty(url) || url.Contains("pahe.ph"))
                 {
+                    semaphore.WaitOne();
+
                     if (DateTime.Now.Subtract(loginTime).TotalSeconds < taskTimeout)
                     {
                         Thread.Sleep(10);
@@ -869,10 +871,14 @@ namespace PaheScrapper
 
                         throw new Exception("Website has error");
                     }
+
+                    semaphore.Release();
                 }
 
                 else
                 {
+                    semaphore.WaitOne();
+
                     var otherUrl = url;
 
                     foreach (var handle in handles)
@@ -881,6 +887,8 @@ namespace PaheScrapper
 
                     handles.Clear();
                     handles.Push(windows[currentWindow]);
+
+                    semaphore.Release();
 
                     return otherUrl;
                 }

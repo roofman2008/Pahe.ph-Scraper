@@ -208,8 +208,12 @@ namespace PaheScrapper
 
             foreach (var chromeProcess in chromeProcesses)
             {
-                if (!chromeProcess.HasExited)
-                    chromeProcess.Kill();
+                try
+                {
+                    if (!chromeProcess.HasExited)
+                        chromeProcess.Kill();
+                }
+                catch { }
             }
         }
 

@@ -128,8 +128,6 @@ namespace PaheScrapper
                         goto summeryFinish;
                 }
 
-                //goto summeryFinish;
-
                 int currentPageSnapshot = _currentPage;
 
                 for (int i = currentPageSnapshot; i < _maxPage; i++)
@@ -167,7 +165,7 @@ namespace PaheScrapper
                 {
                     int retryCount = 0;
                     int retryLimit = Configuration.Default.HtmlRetryLimit;
-                    ConsoleHelper.LogInfo($"Page: {_currentPage}/{_maxPage}");
+                    ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
 
                     var movie = _websiteContext.MovieSummeries[i];
 
@@ -347,7 +345,7 @@ namespace PaheScrapper
 
                 for (int i = currentPageSnapshot; i < _websiteContext.MovieSummeries.Count; i++)
                 {
-                    ConsoleHelper.LogInfo($"Page: {_currentPage}/{_maxPage}");
+                    ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
                     DateTime preTimestamp = DateTime.Now;
                     
                     var movie = _websiteContext.MovieSummeries[i];

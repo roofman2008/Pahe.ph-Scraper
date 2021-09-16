@@ -185,6 +185,7 @@ namespace PaheScrapper
                 var downloadHtmls = downloadInnerNode.InnerHtml.Replace("<br>", "")
                     .Replace("</p>", "")
                     .Replace("<p><b>", "<p><b><b>")
+                    //.Replace('\n', ' ')
                     .TrimStart()
                     .TrimEnd()
                     .Split(new string[] { "&nbsp;\n", "<p><b>" }, StringSplitOptions.RemoveEmptyEntries)
@@ -193,11 +194,13 @@ namespace PaheScrapper
 
                 /*Fix Array Split*/
                 List<string> downloadHtmlsList = new List<string>();
+                int downloadHtmlsIndex = -1;
                 for (int i = 0; i < downloadHtmls.Length; i++)
                 {
                     if (i == 0)
                     {
                         downloadHtmlsList.Add(downloadHtmls[i]);
+                        downloadHtmlsIndex++;
                     }
                     else
                     {
@@ -206,11 +209,16 @@ namespace PaheScrapper
                             var template = downloadHtmls[i].Substring(0, 4);
                             if (template == "{{--")
                             {
-                                downloadHtmlsList[i - 1] = downloadHtmlsList[i - 1] + downloadHtmls[i];
+                                downloadHtmlsList[downloadHtmlsIndex] = downloadHtmlsList[downloadHtmlsIndex] + downloadHtmls[i];
+                            }
+                            else if (template.Count(l => l == '\n') > 2)
+                            {
+
                             }
                             else
                             {
                                 downloadHtmlsList.Add(downloadHtmls[i]);
+                                downloadHtmlsIndex++;
                             }
                         }
                     }

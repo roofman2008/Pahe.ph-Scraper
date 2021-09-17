@@ -561,9 +561,11 @@ namespace PaheScrapper
                     //Case 6
                     (pageSource.Contains("fatal") && pageSource.Contains("error") &&
                      pageSource.Contains("on line")) ||
-                    //Case 6
+                    //Case 7
                     (pageSource.Contains("503") && pageSource.Contains("service") &&
-                     pageSource.Contains("temporarily") && pageSource.Contains("unavailable") && pageSource.Contains("tengine"))
+                     pageSource.Contains("temporarily") && pageSource.Contains("unavailable") && pageSource.Contains("tengine")) ||
+                    //Case 8
+                    (pageSource.Contains("bad") && pageSource.Contains("request"))
                 )
                 {
                     foreach (var handle in handles)

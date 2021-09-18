@@ -565,7 +565,7 @@ namespace PaheScrapper
                     (pageSource.Contains("503") && pageSource.Contains("service") &&
                      pageSource.Contains("temporarily") && pageSource.Contains("unavailable") && pageSource.Contains("tengine")) ||
                     //Case 8
-                    (pageSource.Contains("bad") && pageSource.Contains("request"))
+                    (pageSource.Contains("bad request"))
                 )
                 {
                     foreach (var handle in handles)

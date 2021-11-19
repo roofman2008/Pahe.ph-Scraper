@@ -61,7 +61,7 @@ namespace PaheScrapper.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool WebDriveHeadless {
             get {
                 return ((bool)(this["WebDriveHeadless"]));

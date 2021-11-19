@@ -6,11 +6,12 @@ using System.Threading;
 using HtmlAgilityPack;
 using Newtonsoft.Json.Linq;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Support.PageObjects;
 using OpenQA.Selenium.Support.UI;
 using PaheScrapper.Helpers;
 using PaheScrapper.Models;
 using PaheScrapper.Properties;
+using SeleniumExtras.PageObjects;
+using SeleniumExtras.WaitHelpers;
 
 namespace PaheScrapper
 {
@@ -509,9 +510,10 @@ namespace PaheScrapper
         public static WebRequestHeader BypassSurcuri(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)
         {
             int timeout = 30; /*sec*/
-
+            
             var bodyWaiter = new WebDriverWait(driver.SwitchTo().Window(windows[currentWindow]), TimeSpan.FromSeconds(timeout));
             var bodyElement = bodyWaiter.Until(ExpectedConditions.ElementExists(new ByAll(By.TagName("body"), By.Id("top"))));
+            
 
             if (bodyElement != null)
                 return WebDriverHelper.ReplicateRequestHeader(driver.SwitchTo().Window(windows[currentWindow]));

@@ -2,7 +2,7 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="PaheScrapper.Properties" GeneratedClassName="Configuration">
   <Profiles />
   <Settings>
-    <Setting Name="OutputJsonFilename" Type="System.String" Scope="User">
+    <Setting Name="ManagerStateFilename" Type="System.String" Scope="User">
       <Value Profile="(Default)">manager_dump.json</Value>
     </Setting>
     <Setting Name="WebDriveRetryLimit" Type="System.Int32" Scope="User">
@@ -37,6 +37,9 @@
     </Setting>
     <Setting Name="FailsafeThershold" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">50</Value>
+    </Setting>
+    <Setting Name="OutputScrapeFilename" Type="System.String" Scope="User">
+      <Value Profile="(Default)">output.json</Value>
     </Setting>
   </Settings>
 </SettingsFile>

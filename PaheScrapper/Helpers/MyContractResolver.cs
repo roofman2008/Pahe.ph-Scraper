@@ -7,7 +7,7 @@ using Newtonsoft.Json.Serialization;
 
 namespace PaheScrapper.Helpers
 {
-    public class MyContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
+    public class MyContractResolver : DefaultContractResolver
     {
         protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
         {

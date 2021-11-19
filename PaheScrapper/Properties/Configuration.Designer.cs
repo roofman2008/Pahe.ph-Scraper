@@ -26,12 +26,12 @@ namespace PaheScrapper.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("manager_dump.json")]
-        public string OutputJsonFilename {
+        public string ManagerStateFilename {
             get {
-                return ((string)(this["OutputJsonFilename"]));
+                return ((string)(this["ManagerStateFilename"]));
             }
             set {
-                this["OutputJsonFilename"] = value;
+                this["ManagerStateFilename"] = value;
             }
         }
         
@@ -164,6 +164,18 @@ namespace PaheScrapper.Properties {
             }
             set {
                 this["FailsafeThershold"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("output.json")]
+        public string OutputScrapeFilename {
+            get {
+                return ((string)(this["OutputScrapeFilename"]));
+            }
+            set {
+                this["OutputScrapeFilename"] = value;
             }
         }
     }

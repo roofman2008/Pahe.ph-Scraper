@@ -454,11 +454,15 @@ namespace PaheScrapper
             //Movie Array Object
             documentHtml = decodedHtml;
             startPattern = movieArrayId + "=";
-            endPattern = "};";
+            endPattern = "}; function";
             startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
             documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) + 1;
             documentHtml = documentHtml.Substring(0, endIndex);
+
+            if (string.IsNullOrEmpty(documentHtml))
+                return new VMMovieLookup();
+
             JObject linksObject = JObject.Parse(documentHtml);
             IEnumerable<JToken> linksTokens = linksObject.Properties().Select(l => l.Value).ToArray();
             string[] linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();

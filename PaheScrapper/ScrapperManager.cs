@@ -145,8 +145,7 @@ namespace PaheScrapper
                     else
                     {
                         ConsoleHelper.LogError(e.Message);
-                        Console.ReadLine();
-                        return;
+                        throw e;
                     }
                 }
 
@@ -286,8 +285,7 @@ namespace PaheScrapper
                         else
                         {
                             ConsoleHelper.LogError(e.Message);
-                            Console.ReadLine();
-                            return;
+                            throw e;
                         }
                     }
                 }
@@ -502,8 +500,7 @@ namespace PaheScrapper
                         else
                         {
                             ConsoleHelper.LogError(e.Message);
-                            Console.ReadLine();
-                            return;
+                            throw e;
                         }
                     }
 

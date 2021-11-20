@@ -128,9 +128,7 @@ namespace PaheScrapper
                     actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
             }
 
-            Console.BackgroundColor = ConsoleColor.Gray;
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine(string.IsNullOrEmpty(details.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : details.IMDBSourceUrl);
+            ConsoleHelper.LogInfo(string.IsNullOrEmpty(details.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : details.IMDBSourceUrl);
 
             var detailsNode = docNode.Descendants().FirstOrDefault(l => l.Name == "code");
 

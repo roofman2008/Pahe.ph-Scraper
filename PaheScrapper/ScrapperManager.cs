@@ -64,43 +64,7 @@ namespace PaheScrapper
                 }
                 catch (Exception e)
                 {
-                    if (e.Message.Contains("Cannot Get Response."))
-                    {
-                        ConsoleHelper.LogError(e.Message);
-
-                        if (NetworkHelper.IsNetworkStable())
-                        {
-                            ConsoleHelper.LogError($"Retry {retryCount + 1}");
-
-                            if (retryCount < retryLimit - 1)
-                            {
-                                retryCount++;
-                                goto retry;
-                            }
-                            else
-                            {
-                                ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                Console.ReadLine();
-                                return;
-                            }
-                        }
-                        else
-                        {
-                            if (retryLimit + 1 < Configuration.Default.HtmlRetryMaxLimit)
-                            {
-                                ConsoleHelper.LogError($"Increase Retry Limit {retryLimit + 1}");
-                                retryCount++;
-                                retryLimit++;
-
-                                ConsoleHelper.LogInfo($"Wait Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
-                                NetworkHelper.WaitStableNetwork();
-                                ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
-
-                                goto retry;
-                            }
-                        }
-                    }
-                    else if (e.Message.Contains("Input string was not in a correct format."))
+                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response."))
                     {
                         ConsoleHelper.LogError(e.Message);
 
@@ -110,18 +74,18 @@ namespace PaheScrapper
                             retryCount++;
                             retryLimit++;
 
-                            BypassSurcuriRoutine();
-
                             if (retryCount < retryLimit - 1)
                             {
                                 retryCount++;
+
+                                BypassSurcuriRoutine();
+
                                 goto retry;
                             }
                             else
                             {
                                 ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                Console.ReadLine();
-                                return;
+                                throw e;
                             }
                         }
                         else
@@ -204,43 +168,7 @@ namespace PaheScrapper
                     }
                     catch (Exception e)
                     {
-                        if (e.Message.Contains("Cannot Get Response."))
-                        {
-                            ConsoleHelper.LogError(e.Message);
-
-                            if (NetworkHelper.IsNetworkStable())
-                            {
-                                ConsoleHelper.LogError($"Retry {retryCount + 1}");
-
-                                if (retryCount < retryLimit - 1)
-                                {
-                                    retryCount++;
-                                    goto retry;
-                                }
-                                else
-                                {
-                                    ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                    Console.ReadLine();
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                if (retryLimit + 1 < Configuration.Default.HtmlRetryMaxLimit)
-                                {
-                                    ConsoleHelper.LogError($"Increase Retry Limit {retryLimit + 1}");
-                                    retryCount++;
-                                    retryLimit++;
-
-                                    ConsoleHelper.LogInfo($"Wait Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
-                                    NetworkHelper.WaitStableNetwork();
-                                    ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
-
-                                    goto retry;
-                                }
-                            }
-                        }
-                        else if (e.Message.Contains("Input string was not in a correct format."))
+                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response."))
                         {
                             ConsoleHelper.LogError(e.Message);
 
@@ -250,18 +178,18 @@ namespace PaheScrapper
                                 retryCount++;
                                 retryLimit++;
 
-                                BypassSurcuriRoutine();
-
                                 if (retryCount < retryLimit - 1)
                                 {
                                     retryCount++;
+
+                                    BypassSurcuriRoutine();
+
                                     goto retry;
                                 }
                                 else
                                 {
                                     ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                    Console.ReadLine();
-                                    return;
+                                    throw e;
                                 }
                             }
                             else
@@ -313,7 +241,7 @@ namespace PaheScrapper
                     try
                     {
                         htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, _webRequestHeader);
-                        Console.WriteLine(movie.CompleteInfoUrl);
+                        ConsoleHelper.LogInfo(movie.CompleteInfoUrl);
                         var vmMovieLookup = ScrapperMethods.DecodeDetailsVM(htmlDocument);
                         var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument, vmMovieLookup);
                         
@@ -419,43 +347,7 @@ namespace PaheScrapper
                     }
                     catch (Exception e)
                     {
-                        if (e.Message.Contains("Cannot Get Response."))
-                        {
-                            ConsoleHelper.LogError(e.Message);
-
-                            if (NetworkHelper.IsNetworkStable())
-                            {
-                                ConsoleHelper.LogError($"Retry {retryCount + 1}");
-
-                                if (retryCount < retryLimit - 1)
-                                {
-                                    retryCount++;
-                                    goto retry;
-                                }
-                                else
-                                {
-                                    ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                    Console.ReadLine();
-                                    return;
-                                }
-                            }
-                            else
-                            {
-                                if (retryLimit + 1 < Configuration.Default.HtmlRetryMaxLimit)
-                                {
-                                    ConsoleHelper.LogError($"Increase Retry Limit {retryLimit + 1}");
-                                    retryCount++;
-                                    retryLimit++;
-
-                                    ConsoleHelper.LogInfo($"Wait Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
-                                    NetworkHelper.WaitStableNetwork();
-                                    ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
-
-                                    goto retry;
-                                }
-                            }
-                        }
-                        else if (e.Message.Contains("Input string was not in a correct format."))
+                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response."))
                         {
                             ConsoleHelper.LogError(e.Message);
 
@@ -465,18 +357,18 @@ namespace PaheScrapper
                                 retryCount++;
                                 retryLimit++;
 
-                                BypassSurcuriRoutine();
-
                                 if (retryCount < retryLimit - 1)
                                 {
                                     retryCount++;
+
+                                    BypassSurcuriRoutine();
+
                                     goto retry;
                                 }
                                 else
                                 {
                                     ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                    Console.ReadLine();
-                                    return;
+                                    throw e;
                                 }
                             }
                             else

@@ -47,16 +47,26 @@ namespace PaheScrapper
                 ConsoleHelper.LogInfo("Surcuri Bypassed");
             }
 
-            void PersistHtmlState()
+            void PersistHtmlState(bool transition)
             {
                 if ((_currentPage + 1) % Configuration.Default.HTMLSaveStateThershold == 0)
+                {
+                    if (!transition)
+                        _currentPage++;
+
                     saveState(_scrapperState);
+                }
             }
 
-            void PersistWebDriveState()
+            void PersistWebDriveState(bool transition)
             {
                 if ((_currentPage + 1) % Configuration.Default.WebDriveSaveStateThershold == 0)
+                {
+                    if (!transition)
+                        _currentPage++;
+
                     saveState(_scrapperState);
+                }
             }
 
             HtmlDocument htmlDocument = null;
@@ -127,7 +137,6 @@ namespace PaheScrapper
                 _scrapperState = ScrapperState.Summery;
                 _currentPage = 0;
                 ConsoleHelper.LogInfo($"Pages: {_maxPage}");
-                saveState(_scrapperState);
             }
 
             if (_scrapperState == ScrapperState.Summery)
@@ -142,7 +151,7 @@ namespace PaheScrapper
 
                     _websiteContext.MovieSummeries.AddRange(newMoviesList);
 
-                    PersistHtmlState();
+                    PersistHtmlState(false);
 
                      ++_currentPage;
 
@@ -171,7 +180,7 @@ namespace PaheScrapper
 
                         _websiteContext.MovieSummeries.AddRange(newMoviesList);
 
-                        PersistHtmlState();
+                        PersistHtmlState(false);
 
                         if (newMoviesList.Count == 0)
                             goto summeryFinish;
@@ -231,9 +240,9 @@ namespace PaheScrapper
                 _scrapperState = ScrapperState.Details;
                 _currentPage = 0;
                 _maxPage = _websiteContext.MovieSummeries.Count;
-                saveState(_scrapperState);
+                PersistHtmlState(true);
             }
- 
+
             if (_scrapperState == ScrapperState.Details)
             {
                 int currentPageSnapshot = _currentPage;
@@ -355,7 +364,7 @@ namespace PaheScrapper
                             #endregion
                         }
 
-                        PersistHtmlState();
+                        PersistHtmlState(false);
                     }
                     catch (Exception e)
                     {
@@ -411,7 +420,7 @@ namespace PaheScrapper
                 _scrapperState = ScrapperState.Sora;
                 _currentPage = 0;
                 _maxPage = _websiteContext.MovieSummeries.Count;
-                saveState(_scrapperState);
+                PersistHtmlState(true);
             }
 
             if (_scrapperState == ScrapperState.Sora)
@@ -574,8 +583,10 @@ namespace PaheScrapper
 
                     ConsoleHelper.LogStats($"Time: {DateTime.Now.Subtract(preTimestamp)}");
 
-                    PersistWebDriveState();
+                    PersistWebDriveState(false);
                 }
+
+                PersistWebDriveState(true);
 
                 ScrapperWeb.ReleaseActiveScrape();
 

@@ -47,6 +47,18 @@ namespace PaheScrapper
                 ConsoleHelper.LogInfo("Surcuri Bypassed");
             }
 
+            void PersistHtmlState()
+            {
+                if ((_currentPage + 1) % Configuration.Default.HTMLSaveStateThershold == 0)
+                    saveState(_scrapperState);
+            }
+
+            void PersistWebDriveState()
+            {
+                if ((_currentPage + 1) % Configuration.Default.WebDriveSaveStateThershold == 0)
+                    saveState(_scrapperState);
+            }
+
             HtmlDocument htmlDocument = null;
 
             if (_scrapperState == ScrapperState.Initiate)
@@ -70,22 +82,20 @@ namespace PaheScrapper
 
                         if (NetworkHelper.IsNetworkStable())
                         {
-                            ConsoleHelper.LogError($"Increase Retry Limit {retryLimit + 1}");
-                            retryCount++;
-                            retryLimit++;
+                            ConsoleHelper.LogError($"Retry {retryCount + 1}");
 
                             if (retryCount < retryLimit - 1)
                             {
                                 retryCount++;
 
-                                BypassSurcuriRoutine();
+                                if (e.Message.Contains("Input string was not in a correct format."))
+                                    BypassSurcuriRoutine();
 
                                 goto retry;
                             }
                             else
                             {
                                 ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                throw e;
                             }
                         }
                         else
@@ -100,7 +110,8 @@ namespace PaheScrapper
                                 NetworkHelper.WaitStableNetwork();
                                 ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                BypassSurcuriRoutine();
+                                if (e.Message.Contains("Input string was not in a correct format."))
+                                    BypassSurcuriRoutine();
 
                                 goto retry;
                             }
@@ -114,26 +125,26 @@ namespace PaheScrapper
                 }
 
                 _scrapperState = ScrapperState.Summery;
-                _currentPage = 1;
+                _currentPage = 0;
                 ConsoleHelper.LogInfo($"Pages: {_maxPage}");
                 saveState(_scrapperState);
             }
 
             if (_scrapperState == ScrapperState.Summery)
             {
-                if (_currentPage == 1)
+                if (_currentPage == 0)
                 {
-                    ConsoleHelper.LogInfo($"Page: {_currentPage}/{_maxPage}");
+                    ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
 
                     var movieList = ScrapperMethods.MoviesList(htmlDocument);
                     var newMoviesList = movieList.Where(l =>
                         _websiteContext.MovieSummeries.All(c => c.CompleteInfoUrl != l.CompleteInfoUrl)).ToList();
 
                     _websiteContext.MovieSummeries.AddRange(newMoviesList);
-                    ++_currentPage;
 
-                    if (_currentPage % Configuration.Default.HTMLSaveStateThershold == 0)
-                        saveState(_scrapperState);
+                    PersistHtmlState();
+
+                     ++_currentPage;
 
                     if (newMoviesList.Count == 0)
                         goto summeryFinish;
@@ -145,12 +156,12 @@ namespace PaheScrapper
 
                 for (int i = currentPageSnapshot; i < _maxPage; i++)
                 {
+                    _currentPage = i;
+                    ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
+
                     retry:
                     try
                     {
-                        ConsoleHelper.LogInfo($"Page: {_currentPage}/{_maxPage}");
-
-                        _currentPage = i;
                         htmlDocument = ScrapperWeb.GetDownloadHtml(ScrapperConstants.WebsiteLandingPaging(i),
                             _webRequestHeader);
 
@@ -160,8 +171,7 @@ namespace PaheScrapper
 
                         _websiteContext.MovieSummeries.AddRange(newMoviesList);
 
-                        if (_currentPage % Configuration.Default.HTMLSaveStateThershold == 0)
-                            saveState(_scrapperState);
+                        PersistHtmlState();
 
                         if (newMoviesList.Count == 0)
                             goto summeryFinish;
@@ -174,22 +184,20 @@ namespace PaheScrapper
 
                             if (NetworkHelper.IsNetworkStable())
                             {
-                                ConsoleHelper.LogError($"Increase Retry Limit {retryLimit + 1}");
-                                retryCount++;
-                                retryLimit++;
+                                ConsoleHelper.LogError($"Retry {retryCount + 1}");
 
                                 if (retryCount < retryLimit - 1)
                                 {
                                     retryCount++;
 
-                                    BypassSurcuriRoutine();
+                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                        BypassSurcuriRoutine();
 
                                     goto retry;
                                 }
                                 else
                                 {
                                     ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                    throw e;
                                 }
                             }
                             else
@@ -204,7 +212,8 @@ namespace PaheScrapper
                                     NetworkHelper.WaitStableNetwork();
                                     ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                    BypassSurcuriRoutine();
+                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                        BypassSurcuriRoutine();
 
                                     goto retry;
                                 }
@@ -233,6 +242,7 @@ namespace PaheScrapper
                 {
                     int retryCount = 0;
                     int retryLimit = Configuration.Default.HtmlRetryLimit;
+                    _currentPage = i;
                     ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
 
                     var movie = _websiteContext.MovieSummeries[i];
@@ -247,14 +257,14 @@ namespace PaheScrapper
                         
                         if (movie.MovieDetails == null)
                         {
-                            ConsoleHelper.LogBranch($"New Movie [{i}] - Add New Details");
+                            ConsoleHelper.LogBranch($"New Movie [{i + 1}] - Add New Details");
 
                             ScrapperFixes.NextSiblinMergeDownloadQuality(tmpDetails);
                             movie.MovieDetails = tmpDetails;
                         }
                         else
                         {
-                            ConsoleHelper.LogBranch($"Existing Movie [{i}] - Update Current Details");
+                            ConsoleHelper.LogBranch($"Existing Movie [{i + 1}] - Update Current Details");
 
                             #region Exist Movie Details
 
@@ -344,6 +354,8 @@ namespace PaheScrapper
 
                             #endregion
                         }
+
+                        PersistHtmlState();
                     }
                     catch (Exception e)
                     {
@@ -353,22 +365,20 @@ namespace PaheScrapper
 
                             if (NetworkHelper.IsNetworkStable())
                             {
-                                ConsoleHelper.LogError($"Increase Retry Limit {retryLimit + 1}");
-                                retryCount++;
-                                retryLimit++;
+                                ConsoleHelper.LogError($"Retry {retryCount + 1}");
 
                                 if (retryCount < retryLimit - 1)
                                 {
                                     retryCount++;
 
-                                    BypassSurcuriRoutine();
+                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                        BypassSurcuriRoutine();
 
                                     goto retry;
                                 }
                                 else
                                 {
                                     ConsoleHelper.LogCritical("Exceed Retry Limit");
-                                    throw e;
                                 }
                             }
                             else
@@ -383,7 +393,8 @@ namespace PaheScrapper
                                     NetworkHelper.WaitStableNetwork();
                                     ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                    BypassSurcuriRoutine();
+                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                        BypassSurcuriRoutine();
 
                                     goto retry;
                                 }
@@ -395,11 +406,6 @@ namespace PaheScrapper
                             throw e;
                         }
                     }
-
-                    if (_currentPage % Configuration.Default.HTMLSaveStateThershold == 0)
-                        saveState(_scrapperState);
-
-                    ++_currentPage;
                 }
 
                 _scrapperState = ScrapperState.Sora;
@@ -425,6 +431,7 @@ namespace PaheScrapper
 
                 for (int i = currentPageSnapshot; i < _websiteContext.MovieSummeries.Count; i++)
                 {
+                    _currentPage = i;
                     ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
                     DateTime preTimestamp = DateTime.Now;
                     
@@ -563,10 +570,7 @@ namespace PaheScrapper
 
                     ConsoleHelper.LogStats($"Time: {DateTime.Now.Subtract(preTimestamp)}");
 
-                    ++_currentPage;
-
-                    if (_currentPage % Configuration.Default.WebDriveSaveStateThershold == 0)
-                        saveState(_scrapperState);
+                    PersistWebDriveState();
                 }
 
                 ScrapperWeb.ReleaseActiveScrape();

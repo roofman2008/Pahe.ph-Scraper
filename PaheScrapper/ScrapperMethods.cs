@@ -474,6 +474,25 @@ namespace PaheScrapper
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) - 1;
             documentHtml = documentHtml.Substring(0, endIndex);
             string[] buttonsHtmlArray = documentHtml.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+            /*Merge Non Split Errors For Unicode*/
+            var buttonsHtmlList = new List<string>();
+            int buttonsHtmlListIndex = -1;
+            for (var i = 0; i < buttonsHtmlArray.Length; i++)
+            {
+                if (buttonsHtmlArray[i].Contains("a.innerHTML"))
+                {
+                    buttonsHtmlList.Add(buttonsHtmlArray[i]);
+                    buttonsHtmlListIndex++;
+                }
+                else
+                {
+                    buttonsHtmlList[buttonsHtmlListIndex] += ";" + buttonsHtmlArray[i];
+                }
+            }
+
+            buttonsHtmlArray = buttonsHtmlList.ToArray();
+
             var buttonsObjects = buttonsHtmlArray.Select(l =>
             {
                 documentHtml = l;

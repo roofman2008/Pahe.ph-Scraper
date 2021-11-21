@@ -555,6 +555,10 @@ namespace PaheScrapper
                             if (failedUrls.Count < pending)
                             {
                                 emergencySaveState(_scrapperState);
+
+                                ScrapperWeb.ReleaseActiveScrape();
+                                ScrapperWeb.InitializeActiveScrape(scrapperInstance);
+
                                 goto retry_phase;
                             }
                             else

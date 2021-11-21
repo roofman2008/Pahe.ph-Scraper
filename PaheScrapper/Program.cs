@@ -130,14 +130,13 @@ namespace PaheScrapper
                         {
                             ConsoleHelper.LogStorage("Normal Save Scrapper State");
 
-                            using (var file =
-                                File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
+                            using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                             {
-                                file.Write(_manager.Serialize());
+                                file.WriteAsync(_manager.Serialize()).Wait();
                                 file.Close();
                             }
 
-                            int backupTriggerCount = Configuration.Default.FailsafeThershold *
+                            int backupTriggerCount = Configuration.Default.FailsafeStateThershold *
                                                      (state == ScrapperState.Sora
                                                          ? Configuration.Default.WebDriveSaveStateThershold
                                                          : Configuration.Default.HTMLSaveStateThershold);
@@ -165,23 +164,16 @@ namespace PaheScrapper
                         },
                         (state) =>
                         {
-                            ConsoleHelper.LogStorage("Emergency Save Scrapper State");
+                            ConsoleHelper.LogStorage("Emergency Save Scraper State");
 
                             using (var file =
                                 File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                             {
-                                file.Write(_manager.Serialize());
+                                file.WriteAsync(_manager.Serialize()).Wait();
                                 file.Close();
                             }
 
-                            if (state == ScrapperState.Sora)
-                            {
-                                ScrapperWeb.ReleaseActiveScrape();
-                                int scrapperInstance = Configuration.Default.WebDriveInstances;
-                                ScrapperWeb.InitializeActiveScrape(scrapperInstance);
-                            }
-
-                            ConsoleHelper.LogCritical($"Re-Run the Scarpper for [{retry}] time");
+                            ConsoleHelper.LogCritical($"Re-Run the Scarper for [{retry}] time");
                         });
                 }
                 catch (Exception ex)
@@ -193,14 +185,14 @@ namespace PaheScrapper
 
                 using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                 {
-                    file.Write(_manager.Serialize());
+                    file.WriteAsync(_manager.Serialize()).Wait();
                     file.Close();
                 }
 
                 /*Output File*/
                 using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.OutputScrapeFilename)))
                 {
-                    file.Write(_manager.Context.Serialize());
+                    file.WriteAsync(_manager.Context.Serialize()).Wait();
                     file.Close();
                 }
 

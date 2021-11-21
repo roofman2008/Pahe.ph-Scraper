@@ -11,9 +11,12 @@ namespace PaheScrapper
     {
         static void Main(string[] args)
         {
+            DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_MAXIMIZE, MF_BYCOMMAND);
+            DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_SIZE, MF_BYCOMMAND);
+
             handler = ConsoleEventCallback;
             SetConsoleCtrlHandler(handler, true);
-
+          
             ScrapperWeb.ReleaseGarbageScrape();
 
             if (args.Length == 0)
@@ -24,6 +27,7 @@ namespace PaheScrapper
             }
         }
 
+        #region Handle Release Console
         static bool ConsoleEventCallback(int eventType)
         {
             if (eventType == 2)
@@ -37,6 +41,30 @@ namespace PaheScrapper
         private delegate bool ConsoleEventDelegate(int eventType);
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool SetConsoleCtrlHandler(ConsoleEventDelegate callback, bool add);
+        #endregion
+
+        #region Prevent Closing Console
+        private const int MF_BYCOMMAND = 0x00000000;
+        private const int SC_CLOSE = 0xF060;           //close button's code in Windows API
+        private const int SC_MINIMIZE = 0xF020;        //for minimize button on forms
+        private const int SC_MAXIMIZE = 0xF030;        //for maximize button on forms
+        private const int MF_ENABLED = 0x00000000;     //enabled button status
+        private const int MF_GRAYED = 0x1;             //disabled button status (enabled = false)
+        private const int MF_DISABLED = 0x00000002;    //disabled button status
+        private const int SC_SIZE = 0xF000;
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetSystemMenu(IntPtr HWNDValue, bool isRevert);
+
+        [DllImport("kernel32.dll", ExactSpelling = true)]
+        private static extern IntPtr GetConsoleWindow();
+
+        [DllImport("user32.dll")]
+        public static extern int DeleteMenu(IntPtr hMenu, int nPosition, int wFlags);
+
+        [DllImport("user32.dll")]
+        private static extern int EnableMenuItem(IntPtr tMenu, int targetItem, int targetStatus);
+        #endregion
 
         static void FullScrape(string command = null)
         {
@@ -128,16 +156,19 @@ namespace PaheScrapper
                 {
                     _manager.Scrape((state) =>
                         {
+                            ConsoleHelper.LogCritical("Don't Kill The Process or Manager State File Will Corrupt While Saving !!!");
+
+                            EnableMenuItem(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_DISABLED);
+
                             ConsoleHelper.LogStorage("Normal Save Scrapper State");
 
-                            using (var file =
-                                File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
+                            using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                             {
-                                file.Write(_manager.Serialize());
+                                file.WriteAsync(_manager.Serialize()).Wait();
                                 file.Close();
                             }
 
-                            int backupTriggerCount = Configuration.Default.FailsafeThershold *
+                            int backupTriggerCount = Configuration.Default.FailsafeStateThershold *
                                                      (state == ScrapperState.Sora
                                                          ? Configuration.Default.WebDriveSaveStateThershold
                                                          : Configuration.Default.HTMLSaveStateThershold);
@@ -162,26 +193,30 @@ namespace PaheScrapper
                                 ConsoleHelper.LogInfo(
                                     $"Failsafe File: {Path.Combine(nowFailsafeDir.FullName, fileName)}");
                             }
+
+                            EnableMenuItem(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_ENABLED);
+
+                            ConsoleHelper.LogInfo("You Can Kill The Process Now.");
                         },
                         (state) =>
                         {
-                            ConsoleHelper.LogStorage("Emergency Save Scrapper State");
+                            ConsoleHelper.LogCritical("Don't Kill The Process or Manager State File Will Corrupt While Saving !!!");
+
+                            EnableMenuItem(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_DISABLED);
+
+                            ConsoleHelper.LogStorage("Emergency Save Scraper State");
 
                             using (var file =
                                 File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                             {
-                                file.Write(_manager.Serialize());
+                                file.WriteAsync(_manager.Serialize()).Wait();
                                 file.Close();
                             }
 
-                            if (state == ScrapperState.Sora)
-                            {
-                                ScrapperWeb.ReleaseActiveScrape();
-                                int scrapperInstance = Configuration.Default.WebDriveInstances;
-                                ScrapperWeb.InitializeActiveScrape(scrapperInstance);
-                            }
+                            ConsoleHelper.LogCritical($"Re-Run the Scarper for [{retry}] time");
 
-                            ConsoleHelper.LogCritical($"Re-Run the Scarpper for [{retry}] time");
+                            EnableMenuItem(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_ENABLED);
+                            ConsoleHelper.LogInfo("You Can Kill The Process Now.");
                         });
                 }
                 catch (Exception ex)
@@ -191,18 +226,26 @@ namespace PaheScrapper
                     return;
                 }
 
+                ConsoleHelper.LogCritical("Don't Kill The Process or Manager & Output Files Will Corrupt While Saving !!!");
+                EnableMenuItem(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_DISABLED);
+
+                ConsoleHelper.LogStorage("Final Save Scraper State");
                 using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                 {
-                    file.Write(_manager.Serialize());
+                    file.WriteAsync(_manager.Serialize()).Wait();
                     file.Close();
                 }
 
                 /*Output File*/
+                ConsoleHelper.LogStorage("Save Scrape Output File");
                 using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.OutputScrapeFilename)))
                 {
-                    file.Write(_manager.Context.Serialize());
+                    file.WriteAsync(_manager.Context.Serialize()).Wait();
                     file.Close();
                 }
+
+                EnableMenuItem(GetSystemMenu(GetConsoleWindow(), false), SC_CLOSE, MF_ENABLED);
+                ConsoleHelper.LogInfo("You Can Kill The Process Now.");
 
                 ScrapperWeb.ReleaseActiveScrape();
 

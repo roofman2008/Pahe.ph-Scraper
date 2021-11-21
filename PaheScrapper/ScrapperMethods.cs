@@ -128,9 +128,7 @@ namespace PaheScrapper
                     actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
             }
 
-            Console.BackgroundColor = ConsoleColor.Gray;
-            Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine(string.IsNullOrEmpty(details.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : details.IMDBSourceUrl);
+            ConsoleHelper.LogInfo(string.IsNullOrEmpty(details.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : details.IMDBSourceUrl);
 
             var detailsNode = docNode.Descendants().FirstOrDefault(l => l.Name == "code");
 
@@ -454,11 +452,15 @@ namespace PaheScrapper
             //Movie Array Object
             documentHtml = decodedHtml;
             startPattern = movieArrayId + "=";
-            endPattern = "};";
+            endPattern = "}; function";
             startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
             documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) + 1;
             documentHtml = documentHtml.Substring(0, endIndex);
+
+            if (string.IsNullOrEmpty(documentHtml))
+                return new VMMovieLookup();
+
             JObject linksObject = JObject.Parse(documentHtml);
             IEnumerable<JToken> linksTokens = linksObject.Properties().Select(l => l.Value).ToArray();
             string[] linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();
@@ -472,6 +474,25 @@ namespace PaheScrapper
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) - 1;
             documentHtml = documentHtml.Substring(0, endIndex);
             string[] buttonsHtmlArray = documentHtml.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+            /*Merge Non Split Errors For Unicode*/
+            var buttonsHtmlList = new List<string>();
+            int buttonsHtmlListIndex = -1;
+            for (var i = 0; i < buttonsHtmlArray.Length; i++)
+            {
+                if (buttonsHtmlArray[i].Contains("a.innerHTML"))
+                {
+                    buttonsHtmlList.Add(buttonsHtmlArray[i]);
+                    buttonsHtmlListIndex++;
+                }
+                else
+                {
+                    buttonsHtmlList[buttonsHtmlListIndex] += ";" + buttonsHtmlArray[i];
+                }
+            }
+
+            buttonsHtmlArray = buttonsHtmlList.ToArray();
+
             var buttonsObjects = buttonsHtmlArray.Select(l =>
             {
                 documentHtml = l;

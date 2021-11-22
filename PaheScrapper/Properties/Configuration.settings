@@ -18,10 +18,10 @@
       <Value Profile="(Default)">8</Value>
     </Setting>
     <Setting Name="HTMLSaveStateThershold" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">50</Value>
+      <Value Profile="(Default)">500</Value>
     </Setting>
     <Setting Name="WebDriveSaveStateThershold" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">10</Value>
+      <Value Profile="(Default)">100</Value>
     </Setting>
     <Setting Name="WebDriveRestartOnError" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
@@ -36,7 +36,7 @@
       <Value Profile="(Default)">100</Value>
     </Setting>
     <Setting Name="FailsafeStateThershold" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">50</Value>
+      <Value Profile="(Default)">10</Value>
     </Setting>
     <Setting Name="OutputScrapeFilename" Type="System.String" Scope="User">
       <Value Profile="(Default)">output.json</Value>

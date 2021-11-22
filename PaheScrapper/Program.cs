@@ -84,20 +84,20 @@ namespace PaheScrapper
                 if (command == "continue")
                 {
                     f = File.OpenText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename));
-                    _manager = ScrapperManager.Deserialize(f.ReadToEnd());
+                    _manager = ScrapperManager.Deserialize(StringCompressor.DecompressString(f.ReadToEnd()));
                     f.Close();
                 }
                 else if (command == "resync")
                 {
                     f = File.OpenText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename));
-                    _manager = ScrapperManager.Deserialize(f.ReadToEnd());
+                    _manager = ScrapperManager.Deserialize(StringCompressor.DecompressString(f.ReadToEnd()));
                     _manager.ResetState();
                     f.Close();
                 }
                 else if (command == "loop")
                 {
                     f = File.OpenText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename));
-                    _manager = ScrapperManager.Deserialize(f.ReadToEnd());
+                    _manager = ScrapperManager.Deserialize(StringCompressor.DecompressString(f.ReadToEnd()));
                     f.Close();
                     isLoop = true;
                 }
@@ -108,9 +108,9 @@ namespace PaheScrapper
                 else if (command == "state")
                 {
                     f = File.OpenText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename));
-                    _manager = ScrapperManager.Deserialize(f.ReadToEnd());
+                    _manager = ScrapperManager.Deserialize(StringCompressor.DecompressString(f.ReadToEnd()));
                     f.Close();
-                    ConsoleHelper.LogCommandHandled($"Current State = {_manager.State.ToString()}");
+                    ConsoleHelper.LogCommandHandled($"Current State = {_manager.State}");
                     _manager = null;
                     command = null;
                     goto recommand;
@@ -164,7 +164,7 @@ namespace PaheScrapper
 
                             using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                             {
-                                file.WriteAsync(_manager.Serialize()).Wait();
+                                file.WriteAsync(StringCompressor.CompressString(_manager.Serialize())).Wait();
                                 file.Close();
                             }
 
@@ -209,7 +209,7 @@ namespace PaheScrapper
                             using (var file =
                                 File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                             {
-                                file.WriteAsync(_manager.Serialize()).Wait();
+                                file.WriteAsync(StringCompressor.CompressString(_manager.Serialize())).Wait();
                                 file.Close();
                             }
 
@@ -232,7 +232,7 @@ namespace PaheScrapper
                 ConsoleHelper.LogStorage("Final Save Scraper State");
                 using (var file = File.CreateText(Path.Combine(_folderPath, Configuration.Default.ManagerStateFilename)))
                 {
-                    file.WriteAsync(_manager.Serialize()).Wait();
+                    file.WriteAsync(StringCompressor.CompressString(_manager.Serialize())).Wait();
                     file.Close();
                 }
 

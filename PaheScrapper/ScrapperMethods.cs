@@ -229,7 +229,7 @@ namespace PaheScrapper
                 string qualityNote = null;
 
                 foreach (var downloadHtml in downloadHtmls)
-                {
+                { 
                     var tmp_downloadHtml = downloadHtml.Replace("&nbsp;", "").TrimStart().TrimEnd();
 
                     MemoryStream ms = new MemoryStream();
@@ -347,7 +347,7 @@ namespace PaheScrapper
                     if (qualityNote != null)
                         qualityNote = null;
 
-                    downloadLinkNodes = downloadLinkNodes.Where(l => l.Contains("{{")).ToArray();
+                    downloadLinkNodes = downloadLinkNodes.Where(l => l.Contains("{{")).Select(l=>l.Replace("]", "")).ToArray();
 
                     foreach (var downloadLinkNode in downloadLinkNodes)
                     {

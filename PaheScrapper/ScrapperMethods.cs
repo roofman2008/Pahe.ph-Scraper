@@ -347,7 +347,10 @@ namespace PaheScrapper
                     if (qualityNote != null)
                         qualityNote = null;
 
-                    downloadLinkNodes = downloadLinkNodes.Where(l => l.Contains("{{")).Select(l=>l.Replace("]", "")).ToArray();
+                    downloadLinkNodes = downloadLinkNodes
+                        .Where(l => l.Contains("{{"))
+                        .Select(l=>l.Substring(0, l.LastIndexOf("}}", StringComparison.Ordinal) + 2))
+                        .ToArray();
 
                     foreach (var downloadLinkNode in downloadLinkNodes)
                     {

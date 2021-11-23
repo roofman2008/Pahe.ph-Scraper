@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices;
 using PaheScrapper.Helpers;
 using PaheScrapper.Properties;
@@ -18,6 +19,10 @@ namespace PaheScrapper
             SetConsoleCtrlHandler(handler, true);
           
             ScrapperWeb.ReleaseGarbageScrape();
+
+            /*Fix SSL/TLS Problem*/
+            ServicePointManager.Expect100Continue = true;
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
 
             if (args.Length == 0)
                 FullScrape();

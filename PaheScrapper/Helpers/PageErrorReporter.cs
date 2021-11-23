@@ -6,7 +6,7 @@ namespace PaheScrapper.Helpers
     {
         public static void HtmlError(HtmlDocument document)
         {
-            LogWriter lw = new LogWriter("Html Dump: \n" + document.DocumentNode.InnerHtml);
+            LogWriter lw = new LogWriter("Html Dump: \n" + StringCompressor.CompressString(document.DocumentNode.InnerHtml));
         }
     }
 }

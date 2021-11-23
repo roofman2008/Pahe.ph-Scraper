@@ -39,6 +39,7 @@ namespace PaheScrapper
             }
             catch (WebException e)
             {
+                WebErrorReporter.HttpError(e.Response);
                 throw new ScrapperDownloaderException("Cannot Get Response.", e);
             }
 
@@ -93,8 +94,9 @@ namespace PaheScrapper
             {
                 response = (HttpWebResponse)request.GetResponse();
             }
-            catch (Exception e)
+            catch (WebException e)
             {
+                WebErrorReporter.HttpError(e.Response);
                 throw new ScrapperDownloaderException("Cannot Get Response.", e);
             }
 

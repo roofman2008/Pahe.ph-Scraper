@@ -28,6 +28,14 @@ namespace PaheScrapper.Helpers
             LogWriter lw = new LogWriter("Branch: " + text);
         }
 
+        public static void LogTime(TimeSpan timeSpan, TimeSpan totalTimeSpan)
+        {
+            Console.BackgroundColor = ConsoleColor.DarkMagenta;
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"{(int)timeSpan.TotalMilliseconds} ms - {totalTimeSpan:G}");
+            LogWriter lw = new LogWriter("Time: " + $"{(int)timeSpan.TotalMilliseconds} ms - {totalTimeSpan:G}");
+        }
+
         public static void LogStats(string text)
         {
             Console.BackgroundColor = ConsoleColor.DarkBlue;

@@ -17,6 +17,7 @@ namespace PaheScrapper
         private int _maxPage;
         private readonly WebsiteContext _websiteContext;
         private WebRequestHeader _webRequestHeader;
+        private TimeSpan _totalTimeSpan;
 
         public ScrapperManager()
         {
@@ -24,6 +25,7 @@ namespace PaheScrapper
             _maxPage = _currentPage;
             _scrapperState = ScrapperState.Initiate;
             _websiteContext = new WebsiteContext();
+            _totalTimeSpan = TimeSpan.Zero;
         }
 
         public WebsiteContext Context => _websiteContext;
@@ -71,10 +73,14 @@ namespace PaheScrapper
 
             HtmlDocument htmlDocument = null;
 
+            var initEntryDateTime = DateTime.MinValue;
+
             if (_scrapperState == ScrapperState.Initiate)
             {
                 int retryCount = 0;
                 int retryLimit = Configuration.Default.HtmlRetryLimit;
+
+                initEntryDateTime = DateTime.Now;
 
                 BypassSurcuriRoutine();
 
@@ -86,7 +92,9 @@ namespace PaheScrapper
                 }
                 catch (Exception e)
                 {
-                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response."))
+                    WebErrorReporter.HtmlError(htmlDocument);
+
+                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
                     {
                         ConsoleHelper.LogError(e.Message);
 
@@ -98,7 +106,7 @@ namespace PaheScrapper
                             {
                                 retryCount++;
 
-                                if (e.Message.Contains("Input string was not in a correct format."))
+                                if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
                                     BypassSurcuriRoutine();
 
                                 goto retry;
@@ -155,6 +163,10 @@ namespace PaheScrapper
 
                      ++_currentPage;
 
+                     var elapsedTime = DateTime.Now.Subtract(initEntryDateTime);
+                     _totalTimeSpan += elapsedTime;
+                     ConsoleHelper.LogTime(elapsedTime, _totalTimeSpan);
+
                     if (newMoviesList.Count == 0)
                         goto summeryFinish;
                 }
@@ -167,6 +179,7 @@ namespace PaheScrapper
                 {
                     _currentPage = i;
                     ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
+                    initEntryDateTime = DateTime.Now;
 
                     retry:
                     try
@@ -187,7 +200,9 @@ namespace PaheScrapper
                     }
                     catch (Exception e)
                     {
-                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response."))
+                        WebErrorReporter.HtmlError(htmlDocument);
+
+                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
                         {
                             ConsoleHelper.LogError(e.Message);
 
@@ -199,7 +214,7 @@ namespace PaheScrapper
                                 {
                                     retryCount++;
 
-                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
                                         BypassSurcuriRoutine();
 
                                     goto retry;
@@ -234,6 +249,10 @@ namespace PaheScrapper
                             throw e;
                         }
                     }
+
+                    var elapsedTime = DateTime.Now.Subtract(initEntryDateTime);
+                    _totalTimeSpan += elapsedTime;
+                    ConsoleHelper.LogTime(elapsedTime, _totalTimeSpan);
                 }
 
                 summeryFinish:
@@ -253,6 +272,7 @@ namespace PaheScrapper
                     int retryLimit = Configuration.Default.HtmlRetryLimit;
                     _currentPage = i;
                     ConsoleHelper.LogInfo($"Page: {_currentPage + 1}/{_maxPage}");
+                    initEntryDateTime = DateTime.Now;
 
                     var movie = _websiteContext.MovieSummeries[i];
 
@@ -368,7 +388,9 @@ namespace PaheScrapper
                     }
                     catch (Exception e)
                     {
-                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response."))
+                        WebErrorReporter.HtmlError(htmlDocument);
+
+                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
                         {
                             ConsoleHelper.LogError(e.Message);
 
@@ -380,7 +402,7 @@ namespace PaheScrapper
                                 {
                                     retryCount++;
 
-                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
                                         BypassSurcuriRoutine();
 
                                     goto retry;
@@ -415,6 +437,10 @@ namespace PaheScrapper
                             throw e;
                         }
                     }
+
+                    var elapsedTime = DateTime.Now.Subtract(initEntryDateTime);
+                    _totalTimeSpan += elapsedTime;
+                    ConsoleHelper.LogTime(elapsedTime, _totalTimeSpan);
                 }
 
                 _scrapperState = ScrapperState.Sora;

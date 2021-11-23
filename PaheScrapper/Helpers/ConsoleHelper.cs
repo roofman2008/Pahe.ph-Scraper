@@ -57,7 +57,9 @@ namespace PaheScrapper.Helpers
             Console.BackgroundColor = ConsoleColor.Yellow;
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.Write(text);
-            return Console.ReadLine();
+            string input = Console.ReadLine();
+            LogWriter lw = new LogWriter("Input: " + input);
+            return input;
         }
 
         public static void LogStorage(string text)

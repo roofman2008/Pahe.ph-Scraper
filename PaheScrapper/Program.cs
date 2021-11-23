@@ -12,6 +12,26 @@ namespace PaheScrapper
     {
         static void Main(string[] args)
         {
+            ConsoleHelper.LogInfo("Pahe Scraper - Alpha 2.3");
+
+            if (args.Length == 3 && args[0] == "-d")
+            {
+                string folderPath = AppDomain.CurrentDomain.BaseDirectory;
+                string encodedPath = args[1];
+                string decodedPath = args[2];
+
+                string encodedText = File.OpenText(Path.Combine(folderPath, encodedPath)).ReadToEnd();
+                string decodedText = StringCompressor.DecompressString(encodedText);
+
+                using (var file = File.CreateText(Path.Combine(folderPath, decodedPath)))
+                {
+                    file.WriteAsync(decodedText).Wait();
+                    file.Close();
+                }
+
+                return;
+            }
+
             DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_MAXIMIZE, MF_BYCOMMAND);
             DeleteMenu(GetSystemMenu(GetConsoleWindow(), false), SC_SIZE, MF_BYCOMMAND);
 

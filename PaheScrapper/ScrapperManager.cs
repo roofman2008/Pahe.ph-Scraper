@@ -128,7 +128,7 @@ namespace PaheScrapper
                                 NetworkHelper.WaitStableNetwork();
                                 ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                if (e.Message.Contains("Input string was not in a correct format."))
+                                if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
                                     BypassSurcuriRoutine();
 
                                 goto retry;
@@ -236,7 +236,7 @@ namespace PaheScrapper
                                     NetworkHelper.WaitStableNetwork();
                                     ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
                                         BypassSurcuriRoutine();
 
                                     goto retry;
@@ -424,7 +424,7 @@ namespace PaheScrapper
                                     NetworkHelper.WaitStableNetwork();
                                     ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                    if (e.Message.Contains("Input string was not in a correct format."))
+                                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
                                         BypassSurcuriRoutine();
 
                                     goto retry;

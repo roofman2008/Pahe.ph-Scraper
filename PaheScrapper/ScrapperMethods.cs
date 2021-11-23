@@ -536,12 +536,12 @@ namespace PaheScrapper
             
             var bodyWaiter = new WebDriverWait(driver.SwitchTo().Window(windows[currentWindow]), TimeSpan.FromSeconds(timeout));
             var bodyElement = bodyWaiter.Until(ExpectedConditions.ElementExists(new ByAll(By.TagName("body"), By.Id("top"))));
-            
 
             if (bodyElement != null)
                 return WebDriverHelper.ReplicateRequestHeader(driver.SwitchTo().Window(windows[currentWindow]));
-            else
-                return null;
+
+            ConsoleHelper.LogError("Cannot Bypass Surcuri");
+            return null;
         }
 
         public static string MoviesTrueLinks(IWebDriver driver, int currentWindow, string[] windows, Semaphore semaphore)

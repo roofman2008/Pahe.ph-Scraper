@@ -92,6 +92,8 @@ namespace PaheScrapper
                 }
                 catch (Exception e)
                 {
+                    PageErrorReporter.HtmlError(htmlDocument);
+
                     if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
                     {
                         ConsoleHelper.LogError(e.Message);
@@ -198,6 +200,8 @@ namespace PaheScrapper
                     }
                     catch (Exception e)
                     {
+                        PageErrorReporter.HtmlError(htmlDocument);
+
                         if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
                         {
                             ConsoleHelper.LogError(e.Message);
@@ -384,6 +388,8 @@ namespace PaheScrapper
                     }
                     catch (Exception e)
                     {
+                        PageErrorReporter.HtmlError(htmlDocument);
+
                         if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
                         {
                             ConsoleHelper.LogError(e.Message);

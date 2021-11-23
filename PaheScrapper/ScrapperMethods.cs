@@ -355,7 +355,6 @@ namespace PaheScrapper
                     }
 
                     episode.DownloadQualities.Add(downloadQuality);
-                    //Console.WriteLine($"Q|={downloadQuality.Quality}\n\tS|={downloadQuality.Size}\n\t\tN|={downloadQuality.Notes}");
                 }
 
                 tmp_details.Episodes.Add(episode);

@@ -100,7 +100,7 @@
     <Compile Include="Helpers\LogWriter.cs" />
     <Compile Include="Helpers\MyContractResolver.cs" />
     <Compile Include="Helpers\NetworkHelper.cs" />
-    <Compile Include="Helpers\PageErrorReporter.cs" />
+    <Compile Include="Helpers\WebErrorReporter.cs" />
     <Compile Include="Helpers\ProcessHelper.cs" />
     <Compile Include="Helpers\RutimeParser.cs" />
     <Compile Include="Helpers\StringCompressor.cs" />

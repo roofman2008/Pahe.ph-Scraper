@@ -6,9 +6,9 @@ namespace PaheScrapper.Helpers
 {
     public static class WebErrorReporter
     {
-        public static void HttpError(WebResponse webResponse)
+        public static void WebException(WebException webException)
         {
-            LogWriter lw = new LogWriter("Http Dump: \n" + JsonConvert.SerializeObject(webResponse));
+            LogWriter lw = new LogWriter("Web Exception Dump: \n" + JsonConvert.SerializeObject(webException));
         }
 
         public static void HtmlError(HtmlDocument htmlDocument)

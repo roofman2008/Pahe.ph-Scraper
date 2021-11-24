@@ -280,102 +280,111 @@ namespace PaheScrapper
                     try
                     {
                         htmlDocument = ScrapperWeb.GetDownloadHtml(movie.CompleteInfoUrl, _webRequestHeader);
-                        ConsoleHelper.LogInfo(movie.CompleteInfoUrl);
-                        var vmMovieLookup = ScrapperMethods.DecodeDetailsVM(htmlDocument);
-                        var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument, vmMovieLookup);
                         
-                        if (movie.MovieDetails == null)
+                        ConsoleHelper.LogInfo(movie.CompleteInfoUrl);
+
+                        if (htmlDocument.DocumentNode.InnerLength > 1000)
                         {
-                            ConsoleHelper.LogBranch($"New Movie [{i + 1}] - Add New Details");
+                            var vmMovieLookup = ScrapperMethods.DecodeDetailsVM(htmlDocument);
+                            var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument, vmMovieLookup);
 
-                            ScrapperFixes.NextSiblinMergeDownloadQuality(tmpDetails);
-                            movie.MovieDetails = tmpDetails;
-                        }
-                        else
-                        {
-                            ConsoleHelper.LogBranch($"Existing Movie [{i + 1}] - Update Current Details");
-
-                            #region Exist Movie Details
-
-                            ScrapperFixes.DeleteEmptyEpisodes(movie.MovieDetails);
-                            ScrapperFixes.RemoveDuplicatedEpisodes(movie.MovieDetails);
-                            ScrapperFixes.NextSiblinMergeDownloadQuality(movie.MovieDetails);
-                            ScrapperFixes.NextSiblinMergeDownloadQuality(tmpDetails);
-                            ScrapperFixes.RemoveDuplicatedLink(movie.MovieDetails);
-
-                            movie.MovieDetails.Screenshot = tmpDetails.Screenshot;
-                            movie.MovieDetails.Metadata = tmpDetails.Metadata;
-                            movie.MovieDetails.Chatper = tmpDetails.Chatper;
-                            movie.MovieDetails.FileType = tmpDetails.FileType;
-                            movie.MovieDetails.Runtime = tmpDetails.Runtime;
-                            movie.MovieDetails.SubsceneLink = tmpDetails.SubsceneLink;
-                            movie.MovieDetails.Subtitles = tmpDetails.Subtitles;
-                            movie.MovieDetails.Trailer = tmpDetails.Trailer;
-                            
-                            /*Remove Not Found Episodes*/
-                            var removedEpisodes = movie.MovieDetails.Episodes.Where(s =>
-                                tmpDetails.Episodes.All(l => l.Title != s.Title)).ToList();
-                            removedEpisodes.ForEach((rm) => movie.MovieDetails.Episodes.Remove(rm));
-
-                            foreach (var tmpEpisode in tmpDetails.Episodes)
+                            if (movie.MovieDetails == null)
                             {
-                                var existEpisode =
-                                    movie.MovieDetails.Episodes.SingleOrDefault(l => l.Title == tmpEpisode.Title);
+                                ConsoleHelper.LogBranch($"New Movie [{i + 1}] - Add New Details");
 
-                                if (existEpisode == null)
-                                {
-                                    movie.MovieDetails.Episodes.Add(tmpEpisode);
-                                }
-                                else
-                                {
-                                    /*Remove Not Found DownloadQualities*/
-                                    var removedDownloadQualities = existEpisode.DownloadQualities.Where(s =>
-                                        tmpEpisode.DownloadQualities.All(l => l.Quality != s.Quality)).ToList();
-                                    removedDownloadQualities.ForEach((rdq) => existEpisode.DownloadQualities.Remove(rdq));
+                                ScrapperFixes.NextSiblinMergeDownloadQuality(tmpDetails);
+                                movie.MovieDetails = tmpDetails;
+                            }
+                            else
+                            {
+                                ConsoleHelper.LogBranch($"Existing Movie [{i + 1}] - Update Current Details");
 
-                                    foreach (var tmpDownloadQuality in tmpEpisode.DownloadQualities)
+                                #region Exist Movie Details
+
+                                ScrapperFixes.DeleteEmptyEpisodes(movie.MovieDetails);
+                                ScrapperFixes.RemoveDuplicatedEpisodes(movie.MovieDetails);
+                                ScrapperFixes.NextSiblinMergeDownloadQuality(movie.MovieDetails);
+                                ScrapperFixes.NextSiblinMergeDownloadQuality(tmpDetails);
+                                ScrapperFixes.RemoveDuplicatedLink(movie.MovieDetails);
+
+                                movie.MovieDetails.Screenshot = tmpDetails.Screenshot;
+                                movie.MovieDetails.Metadata = tmpDetails.Metadata;
+                                movie.MovieDetails.Chatper = tmpDetails.Chatper;
+                                movie.MovieDetails.FileType = tmpDetails.FileType;
+                                movie.MovieDetails.Runtime = tmpDetails.Runtime;
+                                movie.MovieDetails.SubsceneLink = tmpDetails.SubsceneLink;
+                                movie.MovieDetails.Subtitles = tmpDetails.Subtitles;
+                                movie.MovieDetails.Trailer = tmpDetails.Trailer;
+
+                                /*Remove Not Found Episodes*/
+                                var removedEpisodes = movie.MovieDetails.Episodes.Where(s =>
+                                    tmpDetails.Episodes.All(l => l.Title != s.Title)).ToList();
+                                removedEpisodes.ForEach((rm) => movie.MovieDetails.Episodes.Remove(rm));
+
+                                foreach (var tmpEpisode in tmpDetails.Episodes)
+                                {
+                                    var existEpisode =
+                                        movie.MovieDetails.Episodes.SingleOrDefault(l => l.Title == tmpEpisode.Title);
+
+                                    if (existEpisode == null)
                                     {
-                                        var existDownloadQuality =
-                                            existEpisode.DownloadQualities.SingleOrDefault(l =>
-                                                l.Quality == tmpDownloadQuality.Quality);
+                                        movie.MovieDetails.Episodes.Add(tmpEpisode);
+                                    }
+                                    else
+                                    {
+                                        /*Remove Not Found DownloadQualities*/
+                                        var removedDownloadQualities = existEpisode.DownloadQualities.Where(s =>
+                                            tmpEpisode.DownloadQualities.All(l => l.Quality != s.Quality)).ToList();
+                                        removedDownloadQualities.ForEach((rdq) =>
+                                            existEpisode.DownloadQualities.Remove(rdq));
 
-                                        if (existDownloadQuality == null)
+                                        foreach (var tmpDownloadQuality in tmpEpisode.DownloadQualities)
                                         {
-                                            existEpisode.DownloadQualities.Add(tmpDownloadQuality);
-                                        }
-                                        else
-                                        {
-                                            /*Remove Not Found Links*/
-                                            var removedLinks = existDownloadQuality.Links.Where(s =>
-                                                tmpDownloadQuality.Links.All(l => l.Url != s.Url)).ToList();
-                                            removedLinks.ForEach((rl) => existDownloadQuality.Links.Remove(rl));
+                                            var existDownloadQuality =
+                                                existEpisode.DownloadQualities.SingleOrDefault(l =>
+                                                    l.Quality == tmpDownloadQuality.Quality);
 
-                                            foreach (var tmpLink in tmpDownloadQuality.Links)
+                                            if (existDownloadQuality == null)
                                             {
-                                                var existLink =
-                                                    existDownloadQuality.Links.SingleOrDefault(l =>
-                                                        l.Title == tmpLink.Title);
+                                                existEpisode.DownloadQualities.Add(tmpDownloadQuality);
+                                            }
+                                            else
+                                            {
+                                                /*Remove Not Found Links*/
+                                                var removedLinks = existDownloadQuality.Links.Where(s =>
+                                                    tmpDownloadQuality.Links.All(l => l.Url != s.Url)).ToList();
+                                                removedLinks.ForEach((rl) => existDownloadQuality.Links.Remove(rl));
 
-                                                if (existLink == null)
+                                                foreach (var tmpLink in tmpDownloadQuality.Links)
                                                 {
-                                                    existDownloadQuality.Links.Add(tmpLink);
-                                                }
-                                                else
-                                                {
-                                                    if (existLink.Url != tmpLink.Url)
+                                                    var existLink =
+                                                        existDownloadQuality.Links.SingleOrDefault(l =>
+                                                            l.Title == tmpLink.Title);
+
+                                                    if (existLink == null)
                                                     {
-                                                        existLink.Url = tmpLink.Url;
-                                                        existLink.ProxiedUrl = tmpLink.ProxiedUrl;
+                                                        existDownloadQuality.Links.Add(tmpLink);
+                                                    }
+                                                    else
+                                                    {
+                                                        if (existLink.Url != tmpLink.Url)
+                                                        {
+                                                            existLink.Url = tmpLink.Url;
+                                                            existLink.ProxiedUrl = tmpLink.ProxiedUrl;
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            #endregion
+                                #endregion
+                            }
                         }
+                        else
+                            ConsoleHelper.LogInfo("Movie Page is Blank");
+
 
                         PersistHtmlState(false);
                     }

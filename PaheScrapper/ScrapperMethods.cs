@@ -77,58 +77,71 @@ namespace PaheScrapper
             MovieDetails details = new MovieDetails();
 
             var docNode = document.DocumentNode;
-            var imdbNode = docNode.Descendants().SingleOrDefaultByNameNClass("a", "imdbwp__link");
-            var imdbRate = docNode.Descendants().SingleOrDefaultByNameNClass("span", "imdbwp__rating");
-            var imdbDescription = docNode.Descendants().SingleOrDefaultByNameNClass("div", "imdbwp__teaser");
-            var imdbFooter = docNode.Descendants().SingleOrDefaultByNameNClass("div", "imdbwp__footer");
+            var imdbNodes = docNode.Descendants().FindByNameNClass("div", "imdbwp");
 
-            if (imdbNode != null)
+            if (imdbNodes != null && imdbNodes.Count() > 0)
             {
-                details.IMDBName = imdbNode.Attributes["title"].Value;
-                details.IMDBSourceUrl = imdbNode.Attributes["href"].Value;
-                var imdbImage = imdbNode.Descendants().Single(l => l.Name == "img");
-                details.IMDBImageUrl = imdbImage.Attributes["src"].Value;
-            }
-
-            if (imdbRate != null)
-            {
-                if (imdbRate.InnerText.ToLower().Contains("rating:"))
+                foreach (var imdbNode in imdbNodes)
                 {
-                    var content = imdbRate.InnerText.ToLower().Replace("rating:", "").TrimStart().TrimEnd();
+                    MovieMetadata movieMetadata = new MovieMetadata();
 
-                    if (!string.IsNullOrEmpty(content))
+                    var imdbLink = imdbNode.Descendants().SingleByNameNClass("a", "imdbwp__link");
+                    var imdbRate = imdbNode.Descendants().SingleByNameNClass("span", "imdbwp__rating");
+                    var imdbDescription = imdbNode.Descendants().SingleByNameNClass("div", "imdbwp__teaser");
+                    var imdbFooter = imdbNode.Descendants().SingleByNameNClass("div", "imdbwp__footer");
+
+
+                    if (imdbLink != null)
                     {
-                        string rateText = content.Substring(0, content.IndexOf("/")).TrimEnd();
-                        details.IMDBScore = float.Parse(rateText);
+                        movieMetadata.IMDBName = imdbLink.Attributes["title"].Value;
+                        movieMetadata.IMDBSourceUrl = imdbLink.Attributes["href"].Value;
+                        var imdbImage = imdbLink.Descendants().Single(l => l.Name == "img");
+                        movieMetadata.IMDBImageUrl = imdbImage.Attributes["src"].Value;
+                    }
 
-                        if (content.Contains("from"))
+                    if (imdbRate != null)
+                    {
+                        if (imdbRate.InnerText.ToLower().Contains("rating:"))
                         {
-                            string usersCountText = content.Substring(content.IndexOf("from") + 4,
-                                    content.IndexOf("users") - content.IndexOf("from") - 4)
-                                .TrimStart().TrimEnd().Replace(",", "");
-                            details.IMDBScoreUsersCount = int.Parse(usersCountText);
+                            var content = imdbRate.InnerText.ToLower().Replace("rating:", "").TrimStart().TrimEnd();
+
+                            if (!string.IsNullOrEmpty(content))
+                            {
+                                string rateText = content.Substring(0, content.IndexOf("/")).TrimEnd();
+                                movieMetadata.IMDBScore = float.Parse(rateText);
+
+                                if (content.Contains("from"))
+                                {
+                                    string usersCountText = content.Substring(content.IndexOf("from") + 4,
+                                            content.IndexOf("users") - content.IndexOf("from") - 4)
+                                        .TrimStart().TrimEnd().Replace(",", "");
+                                    movieMetadata.IMDBScoreUsersCount = int.Parse(usersCountText);
+                                }
+                            }
                         }
                     }
+
+                    if (imdbDescription != null)
+                    {
+                        var content = imdbDescription.InnerText;
+                        movieMetadata.IMDBDescription = content.ToLower() == "n/a" ? null : content;
+                    }
+
+                    if (imdbFooter != null)
+                    {
+                        var directorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
+                        var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Actors:")?.NextSibling.NextSibling;
+                        movieMetadata.IMDBDirectors =
+                            directorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
+                        movieMetadata.IMDBActors =
+                            actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
+                    }
+
+                    ConsoleHelper.LogInfo(string.IsNullOrEmpty(movieMetadata.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : movieMetadata.IMDBSourceUrl);
+
+                    details.Metadata.Add(movieMetadata);
                 }
             }
-
-            if (imdbDescription != null)
-            {
-                var content = imdbDescription.InnerText;
-                details.IMDBDescription = content.ToLower() == "n/a" ? null : content;
-            }
-
-            if (imdbFooter != null)
-            {
-                var directorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
-                var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Actors:")?.NextSibling.NextSibling;
-                details.IMDBDirectors =
-                    directorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
-                details.IMDBActors =
-                    actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
-            }
-
-            ConsoleHelper.LogInfo(string.IsNullOrEmpty(details.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : details.IMDBSourceUrl);
 
             var detailsNode = docNode.Descendants().FirstOrDefault(l => l.Name == "code");
 

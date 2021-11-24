@@ -349,6 +349,7 @@ namespace PaheScrapper
 
                     downloadLinkNodes = downloadLinkNodes
                         .Where(l => l.Contains("{{"))
+                        .SelectMany(l => l.Split(new[] { "{{" }, StringSplitOptions.RemoveEmptyEntries).Select(s => "{{" + s)) /*Fix Inline Download Links Case*/
                         .Select(l=>l.Substring(0, l.LastIndexOf("}}", StringComparison.Ordinal) + 2))
                         .ToArray();
 

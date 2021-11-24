@@ -495,8 +495,11 @@ namespace PaheScrapper
             if (arrayOfString)
             {
                 /*Array Case*/
-                JArray linksInArrayStruct = new JArray(documentHtml);
-                linksArray = linksInArrayStruct.Children().Select(l=>l.Value<string>()).ToArray();
+                if (documentHtml != "[]")
+                {
+                    JArray linksInArrayStruct = new JArray(documentHtml);
+                    linksArray = linksInArrayStruct.Children().Select(l => l.Value<string>()).ToArray();
+                }
             }
             else
             {
@@ -505,6 +508,10 @@ namespace PaheScrapper
                 IEnumerable<JToken> linksTokens = linksObject.Properties().Select(l => l.Value).ToArray();
                 linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();
             }
+
+            /*Empty Array => Empty Lookup*/
+            if (linksArray == null)
+                return new VMMovieLookup();
 
             //Movie Page Links Buttons
             documentHtml = decodedHtml;

@@ -304,16 +304,9 @@ namespace PaheScrapper
                             ScrapperFixes.RemoveDuplicatedLink(movie.MovieDetails);
 
                             movie.MovieDetails.Screenshot = tmpDetails.Screenshot;
-                            movie.MovieDetails.IMDBActors = tmpDetails.IMDBActors;
-                            movie.MovieDetails.IMDBDescription = tmpDetails.IMDBDescription;
-                            movie.MovieDetails.IMDBDirectors = tmpDetails.IMDBDirectors;
-                            movie.MovieDetails.IMDBScore = tmpDetails.IMDBScore;
-                            movie.MovieDetails.IMDBScoreUsersCount = tmpDetails.IMDBScoreUsersCount;
+                            movie.MovieDetails.Metadata = tmpDetails.Metadata;
                             movie.MovieDetails.Chatper = tmpDetails.Chatper;
                             movie.MovieDetails.FileType = tmpDetails.FileType;
-                            movie.MovieDetails.IMDBImageUrl = tmpDetails.IMDBImageUrl;
-                            movie.MovieDetails.IMDBName = tmpDetails.IMDBName;
-                            movie.MovieDetails.IMDBSourceUrl = tmpDetails.IMDBSourceUrl;
                             movie.MovieDetails.Runtime = tmpDetails.Runtime;
                             movie.MovieDetails.SubsceneLink = tmpDetails.SubsceneLink;
                             movie.MovieDetails.Subtitles = tmpDetails.Subtitles;

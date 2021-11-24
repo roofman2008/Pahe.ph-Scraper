@@ -77,7 +77,7 @@ namespace PaheScrapper
             MovieDetails details = new MovieDetails();
 
             var docNode = document.DocumentNode;
-            var imdbNodes = docNode.Descendants().FindByNameNClass("div", "imdbwp");
+            var imdbNodes = docNode.Descendants().FindByNameNContainClass("div", "imdbwp");
 
             if (imdbNodes != null && imdbNodes.Count() > 0)
             {
@@ -129,12 +129,15 @@ namespace PaheScrapper
 
                     if (imdbFooter != null)
                     {
-                        var directorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Director:")?.NextSibling.NextSibling;
-                        var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && l.InnerText == "Actors:")?.NextSibling.NextSibling;
+                        var directorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && (l.InnerText == "Directors:" || l.InnerText == "Director:"))?.NextSibling.NextSibling;
+                        var actorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && (l.InnerText == "Actors:" || l.InnerText=="Actor:"))?.NextSibling.NextSibling;
+                        var creatorsNode = imdbFooter.Descendants().FirstOrDefault(l => l.Name == "strong" && (l.InnerText == "Creators:" || l.InnerText == "Creator:"))?.NextSibling.NextSibling;
                         movieMetadata.IMDBDirectors =
                             directorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
                         movieMetadata.IMDBActors =
                             actorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
+                        movieMetadata.IMDBCreators =
+                            creatorsNode?.InnerText.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimStart().TrimEnd()).ToList();
                     }
 
                     ConsoleHelper.LogInfo(string.IsNullOrEmpty(movieMetadata.IMDBSourceUrl) ? "#Error# [No IMDB Info]" : movieMetadata.IMDBSourceUrl);

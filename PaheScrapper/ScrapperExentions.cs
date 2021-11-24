@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using HtmlAgilityPack;
 
@@ -28,6 +29,13 @@ namespace PaheScrapper
         {
             return source.Where(l =>
                 l.Name == name && l.Attributes.Contains("class") && l.Attributes["class"].Value == @class);
+        }
+
+        public static IEnumerable<TSource> FindByNameNContainClass<TSource>(this IEnumerable<TSource> source, string name, string @class) where TSource : HtmlNode
+        {
+            return source.Where(l =>
+                l.Name == name && l.Attributes.Contains("class") && l.Attributes["class"].Value
+                    .Split(new[] {" "}, StringSplitOptions.RemoveEmptyEntries).Contains(@class));
         }
     }
 }

@@ -20,5 +20,7 @@ namespace PaheScrapper.Models
         public List<string> IMDBDirectors { get; set; }
         // ReSharper disable once InconsistentNaming
         public List<string> IMDBActors { get; set; }
+        // ReSharper disable once InconsistentNaming
+        public List<string> IMDBCreators { get; set; }
     }
 }

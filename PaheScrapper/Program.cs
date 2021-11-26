@@ -12,7 +12,7 @@ namespace PaheScrapper
     {
         static void Main(string[] args)
         {
-            ConsoleHelper.LogInfo("Pahe Scraper - Alpha 2.4");
+            ConsoleHelper.LogInfo("Pahe Scraper - Alpha 2.5");
 
             if (args.Length == 3 && args[0] == "-d")
             {

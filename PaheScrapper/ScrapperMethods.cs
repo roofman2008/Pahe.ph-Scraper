@@ -475,14 +475,43 @@ namespace PaheScrapper
             startIndex = documentHtml.IndexOf(startPattern, StringComparison.Ordinal);
             documentHtml = documentHtml.Substring(startIndex + startPattern.Length, documentHtml.Length - startPattern.Length - startIndex);
             endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) + 1;
+
+            /*Array Case*/
+            bool arrayOfString = false;
+            if (endIndex == 0)
+            {
+                endPattern = "]; function";
+                endIndex = documentHtml.IndexOf(endPattern, StringComparison.Ordinal) + 1;
+                arrayOfString = true;
+            }
+
             documentHtml = documentHtml.Substring(0, endIndex);
 
             if (string.IsNullOrEmpty(documentHtml))
                 return new VMMovieLookup();
 
-            JObject linksObject = JObject.Parse(documentHtml);
-            IEnumerable<JToken> linksTokens = linksObject.Properties().Select(l => l.Value).ToArray();
-            string[] linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();
+            string[] linksArray = null;
+
+            if (arrayOfString)
+            {
+                /*Array Case*/
+                if (documentHtml != "[]")
+                {
+                    JArray linksInArrayStruct = new JArray(documentHtml);
+                    linksArray = linksInArrayStruct.Children().Select(l => l.Value<string>()).ToArray();
+                }
+            }
+            else
+            {
+                /*Object Case*/
+                JObject linksObject = JObject.Parse(documentHtml);
+                IEnumerable<JToken> linksTokens = linksObject.Properties().Select(l => l.Value).ToArray();
+                linksArray = linksTokens.Select(l => l.Value<string>()).ToArray();
+            }
+
+            /*Empty Array => Empty Lookup*/
+            if (linksArray == null)
+                return new VMMovieLookup();
 
             //Movie Page Links Buttons
             documentHtml = decodedHtml;

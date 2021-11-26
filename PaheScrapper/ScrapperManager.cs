@@ -51,22 +51,35 @@ namespace PaheScrapper
 
             void PersistHtmlState(bool transition)
             {
-                if ((_currentPage + 1) % Configuration.Default.HTMLSaveStateThershold == 0)
+                if (!transition)
                 {
-                    if (!transition)
+                    if ((_currentPage + 1) % Configuration.Default.HTMLSaveStateThershold == 0)
+                    {
                         _currentPage++;
 
+                        saveState(_scrapperState);
+                    }
+                }
+                else
+                {
                     saveState(_scrapperState);
                 }
             }
 
             void PersistWebDriveState(bool transition)
             {
-                if ((_currentPage + 1) % Configuration.Default.WebDriveSaveStateThershold == 0)
+                if (!transition)
                 {
-                    if (!transition)
+                    if ((_currentPage + 1) % Configuration.Default.WebDriveSaveStateThershold == 0)
+                    {
+
                         _currentPage++;
 
+                        saveState(_scrapperState);
+                    }
+                }
+                else
+                {
                     saveState(_scrapperState);
                 }
             }

@@ -9,8 +9,9 @@ namespace PaheScrapper.Models
             Links = new List<Link>();
         }
 
+        public DownloadQualityMode Mode { get; set; }
         public string Quality { get; set; }
-        public string Size { get; set; }
+        public DownloadQualitySize Size { get; set; }
         public string Notes { get; set; }
         public bool HasError { get; set; }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using HtmlAgilityPack;
@@ -296,10 +297,21 @@ namespace PaheScrapper
                         
                         ConsoleHelper.LogInfo(movie.CompleteInfoUrl);
 
-                        if (htmlDocument.DocumentNode.InnerLength > 1000)
+                        if (htmlDocument.DocumentNode.InnerHtml.Contains("Javascript is required"))
+                            throw new Exception("Cookie Required.");
+
+                        if (htmlDocument.DocumentNode.InnerLength > 2000)
                         {
-                            var vmMovieLookup = ScrapperMethods.DecodeDetailsVM(htmlDocument);
-                            var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument, vmMovieLookup);
+                            var tmpDetails = ScrapperMethods.MovieDetails(htmlDocument);
+
+                            if (tmpDetails.Episodes.Count == 0)
+                                Debugger.Break();
+
+                            //if (tmpDetails.Episodes.Any(l=>l.DownloadQualities.Count == 0))
+                            //    Debugger.Break();
+
+                            if (tmpDetails.Episodes.Sum(l => l.DownloadQualities.SelectMany(s => s.Links).Count()) < 4)
+                                Debugger.Break();
 
                             if (movie.MovieDetails == null)
                             {
@@ -405,7 +417,10 @@ namespace PaheScrapper
                     {
                         WebErrorReporter.HtmlError(htmlDocument);
 
-                        if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Cannot Get Response.") || e.Message.Contains("Sequence contains no matching element"))
+                        if (e.Message.Contains("Input string was not in a correct format.") ||
+                            e.Message.Contains("Cannot Get Response.") ||
+                            e.Message.Contains("Cookie Required.") ||
+                            e.Message.Contains("Sequence contains no matching element"))
                         {
                             ConsoleHelper.LogError(e.Message);
 
@@ -417,7 +432,9 @@ namespace PaheScrapper
                                 {
                                     retryCount++;
 
-                                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
+                                    if (e.Message.Contains("Input string was not in a correct format.") ||
+                                        e.Message.Contains("Sequence contains no matching element") ||
+                                        e.Message.Contains("Cookie Required."))
                                         BypassSurcuriRoutine();
 
                                     goto retry;
@@ -439,7 +456,9 @@ namespace PaheScrapper
                                     NetworkHelper.WaitStableNetwork();
                                     ConsoleHelper.LogInfo($"Return Stable Connection: [{ScrapperConstants.WebsiteLanding()}]");
 
-                                    if (e.Message.Contains("Input string was not in a correct format.") || e.Message.Contains("Sequence contains no matching element"))
+                                    if (e.Message.Contains("Input string was not in a correct format.") ||
+                                        e.Message.Contains("Sequence contains no matching element") ||
+                                        e.Message.Contains("Cookie Required."))
                                         BypassSurcuriRoutine();
 
                                     goto retry;

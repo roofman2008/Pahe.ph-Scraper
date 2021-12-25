@@ -35,6 +35,11 @@ namespace PaheScrapper.Models
             _lookup.Remove(buttonId);
         }
 
+        public bool IsVMAvailable()
+        {
+            return _lookup.Count > 0;
+        }
+
         public VMMovieObject GetByButtonId(string buttonId)
         {
             return _lookup[buttonId];

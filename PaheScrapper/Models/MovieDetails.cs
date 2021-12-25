@@ -11,6 +11,7 @@ namespace PaheScrapper.Models
             Metadata = new List<MovieMetadata>();
         }
 
+        public MovieDetailsMode MovieDetailsMode { get; set; }
         public List<MovieMetadata> Metadata { get; set; }
         public string FileType { get; set; }
         public TimeSpan Runtime { get; set; }

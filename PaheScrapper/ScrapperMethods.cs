@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -72,9 +73,14 @@ namespace PaheScrapper
             return movieSummeries;
         }
 
-        public static MovieDetails MovieDetails(HtmlDocument document, VMMovieLookup vmMovieLookup)
+        public static MovieDetails MovieDetails(HtmlDocument document)
         {
             MovieDetails details = new MovieDetails();
+            details.MovieDetailsMode = MovieDetailsMode.None;
+
+            var vmMovieLookup = DecodeDetailsVM(document);
+
+            details.MovieDetailsMode |= vmMovieLookup.IsVMAvailable() ? MovieDetailsMode.Obfuscation : MovieDetailsMode.None;
 
             var docNode = document.DocumentNode;
             var imdbNodes = docNode.Descendants().FindByNameNContainClass("div", "imdbwp");
@@ -190,14 +196,79 @@ namespace PaheScrapper
                     : null;
             }
 
-            void ProcessDownloadBox(MovieDetails tmp_details, HtmlNode tmp_downloadNode, string tabName)
+            void ProcessHRefLinks(MovieEpisode tmp_Episode, HtmlNode tmp_downloadNode)
             {
-                var downloadInnerNode = tmp_downloadNode.Descendants().SingleByNameNClass("div", "box-inner-block");
-                downloadInnerNode.Descendants()
-                    .SingleOrDefaultByNameNClass("i", "fa tie-shortcode-boxicon")?.Remove();
-                downloadInnerNode.Descendants().Where(l => l.Name == "a").ToList().ForEach(l => { l?.Remove(); });
+                var downloadHtmls = HtmlAnalysis.LinesToArray(HtmlAnalysis.CleanHtml(tmp_downloadNode.InnerHtml));
 
-                var downloadHtmls = downloadInnerNode.InnerHtml.Replace("<br>", "")
+                DownloadQuality downloadQuality = new DownloadQuality()
+                {
+                    Mode = DownloadQualityMode.None
+                };
+
+                foreach (var downloadHtml in downloadHtmls)
+                {
+                    var note = HtmlAnalysis.ExtractNote(downloadHtml);
+                    var size = HtmlAnalysis.ExtractSize(downloadHtml);
+                    var quality = HtmlAnalysis.ExtractQuality(downloadHtml);
+                    var hRefs = HtmlAnalysis.ExtractHRef(downloadHtml);
+
+                    if ((downloadQuality.Mode == DownloadQualityMode.CompleteNoNotes ||
+                         downloadQuality.Mode == DownloadQualityMode.Complete) &&
+                        hRefs.Length == 0 &&
+                        (!string.IsNullOrEmpty(note) || !string.IsNullOrEmpty(size) || !string.IsNullOrEmpty(quality)))
+                    {
+                        tmp_Episode.DownloadQualities.Add(downloadQuality);
+
+                        downloadQuality = new DownloadQuality()
+                        {
+                            Mode = DownloadQualityMode.None
+                        };
+                    }
+
+                    if (!string.IsNullOrEmpty(note) && !downloadQuality.Mode.HasFlag(DownloadQualityMode.Note))
+                    {
+                        downloadQuality.Notes = note;
+                        downloadQuality.Mode |= DownloadQualityMode.Note;
+                    }
+
+                    if (!string.IsNullOrEmpty(size) && !downloadQuality.Mode.HasFlag(DownloadQualityMode.Size))
+                    {
+                        downloadQuality.Size = size;
+                        downloadQuality.Mode |= DownloadQualityMode.Size;
+                    }
+
+                    if (!string.IsNullOrEmpty(quality) && !downloadQuality.Mode.HasFlag(DownloadQualityMode.Quality))
+                    {
+                        downloadQuality.Quality = quality;
+                        downloadQuality.Mode |= DownloadQualityMode.Quality;
+                    }
+
+                    if (hRefs.Length > 0)
+                    {
+                        foreach (var hRef in hRefs)
+                        {
+                            downloadQuality.Links.Add(new Link()
+                            {
+                                Title = hRef.Title,
+                                Url = hRef.Url,
+                                ProxiedUrl = null
+                            });
+                        }
+
+                        downloadQuality.Mode |= DownloadQualityMode.Links;
+                    }
+                }
+
+                if (downloadQuality.Mode == DownloadQualityMode.CompleteNoNotes ||
+                    downloadQuality.Mode == DownloadQualityMode.Complete)
+                    tmp_Episode.DownloadQualities.Add(downloadQuality);
+            }
+
+            void ProcessVMLinks(MovieEpisode tmp_Episode, HtmlNode tmp_downloadNode, string tabName)
+            {
+                tmp_downloadNode.Descendants().Where(l => l.Name == "a").ToList().ForEach(l => { l?.Remove(); });
+
+                var downloadHtmls = tmp_downloadNode.InnerHtml.Replace("<br>", "")
                     .Replace("</p>", "")
                     .Replace("<p><b>", "<p><b><b>")
                     //.Replace('\n', ' ')
@@ -241,11 +312,10 @@ namespace PaheScrapper
 
                 downloadHtmls = downloadHtmlsList.ToArray();
 
-                MovieEpisode episode = new MovieEpisode() { Title = tabName };
                 string qualityNote = null;
 
                 foreach (var downloadHtml in downloadHtmls)
-                { 
+                {
                     var tmp_downloadHtml = downloadHtml.Replace("&nbsp;", "").TrimStart().TrimEnd();
 
                     MemoryStream ms = new MemoryStream();
@@ -366,7 +436,7 @@ namespace PaheScrapper
                     downloadLinkNodes = downloadLinkNodes
                         .Where(l => l.Contains("{{"))
                         .SelectMany(l => l.Split(new[] { "{{" }, StringSplitOptions.RemoveEmptyEntries).Select(s => "{{" + s)) /*Fix Inline Download Links Case*/
-                        .Select(l=>l.Substring(0, l.LastIndexOf("}}", StringComparison.Ordinal) + 2))
+                        .Select(l => l.Substring(0, l.LastIndexOf("}}", StringComparison.Ordinal) + 2))
                         .ToArray();
 
                     foreach (var downloadLinkNode in downloadLinkNodes)
@@ -374,7 +444,32 @@ namespace PaheScrapper
                         downloadQuality.Links.Add(new Link() { Title = vmMovieLookup.GetByButtonId(downloadLinkNode).ButtonName, Url = vmMovieLookup.GetByButtonId(downloadLinkNode).Url });
                     }
 
-                    episode.DownloadQualities.Add(downloadQuality);
+                    tmp_Episode.DownloadQualities.Add(downloadQuality);
+                }
+            }
+
+            void ProcessDownloadBox(MovieDetails tmp_details, HtmlNode tmp_downloadNode, string tabName)
+            {
+                MovieEpisode episode = new MovieEpisode() { Title = tabName };
+
+                var downloadInnerNode = tmp_downloadNode.Descendants().SingleByNameNClass("div", "box-inner-block");
+                downloadInnerNode.Descendants()
+                    .SingleOrDefaultByNameNClass("i", "fa tie-shortcode-boxicon")?.Remove();
+
+                /*Detect HRef Availablity*/
+                details.MovieDetailsMode |= downloadInnerNode.Descendants().Any(l =>
+                    l.Name == "a" && l.Attributes.Contains("href") && l.Attributes["href"].Value.StartsWith("http")) ? MovieDetailsMode.HRef : MovieDetailsMode.None;
+
+                if (details.MovieDetailsMode.HasFlag(MovieDetailsMode.Obfuscation))
+                {
+                    HtmlNode shadowNode = downloadInnerNode.CloneNode(true);
+                    ProcessVMLinks(episode, shadowNode, tabName);
+                }
+
+                if (details.MovieDetailsMode.HasFlag(MovieDetailsMode.HRef))
+                {
+                    HtmlNode shadowNode = downloadInnerNode.CloneNode(true);
+                    ProcessHRefLinks(episode, shadowNode);
                 }
 
                 tmp_details.Episodes.Add(episode);
@@ -444,7 +539,7 @@ namespace PaheScrapper
             documentHtml = document.ParsedText;
 
             if (string.IsNullOrEmpty(documentHtml))
-                return null;
+                return new VMMovieLookup();
 
             //Get VM Decoder Parameters
             startPattern = "return decodeURIComponent(escape(r))";
@@ -455,6 +550,10 @@ namespace PaheScrapper
             documentHtml = documentHtml.Substring(0, endIndex);
             documentHtml = documentHtml.Replace("\"", "");
             var vmVariables = documentHtml.Split(new[] { ',' });
+
+            if (vmVariables.Length > 6)
+                return new VMMovieLookup();
+
             var decodedHtml = VMDecoder.eval(vmVariables[0], int.Parse(vmVariables[1]), vmVariables[2], int.Parse(vmVariables[3]),
                 int.Parse(vmVariables[4]), int.Parse(vmVariables[5]));
 
@@ -582,6 +681,8 @@ namespace PaheScrapper
             
             var bodyWaiter = new WebDriverWait(driver.SwitchTo().Window(windows[currentWindow]), TimeSpan.FromSeconds(timeout));
             var bodyElement = bodyWaiter.Until(ExpectedConditions.ElementExists(new ByAll(By.TagName("body"), By.Id("top"))));
+
+            Thread.Sleep(1000);
 
             if (bodyElement != null)
                 return WebDriverHelper.ReplicateRequestHeader(driver.SwitchTo().Window(windows[currentWindow]));

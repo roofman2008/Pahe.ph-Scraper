@@ -207,7 +207,7 @@ namespace PaheScrapper
 
                 foreach (var downloadHtml in downloadHtmls)
                 {
-                    var note = HtmlAnalysis.ExtractNote(downloadHtml);
+                    //var note = HtmlAnalysis.ExtractNote(downloadHtml);
                     var size = HtmlAnalysis.ExtractSize(downloadHtml);
                     var quality = HtmlAnalysis.ExtractQuality(downloadHtml);
                     var hRefs = HtmlAnalysis.ExtractHRef(downloadHtml);
@@ -215,7 +215,7 @@ namespace PaheScrapper
                     if ((downloadQuality.Mode == DownloadQualityMode.CompleteNoNotes ||
                          downloadQuality.Mode == DownloadQualityMode.Complete) &&
                         hRefs.Length == 0 &&
-                        (!string.IsNullOrEmpty(note) || !string.IsNullOrEmpty(size) || !string.IsNullOrEmpty(quality)))
+                        (/*!string.IsNullOrEmpty(note) ||*/ !string.IsNullOrEmpty(size) || !string.IsNullOrEmpty(quality)))
                     {
                         tmp_Episode.DownloadQualities.Add(downloadQuality);
 
@@ -225,15 +225,15 @@ namespace PaheScrapper
                         };
                     }
 
-                    if (!string.IsNullOrEmpty(note) && !downloadQuality.Mode.HasFlag(DownloadQualityMode.Note))
+                    if (/*!string.IsNullOrEmpty(note) &&*/ !downloadQuality.Mode.HasFlag(DownloadQualityMode.Note))
                     {
-                        downloadQuality.Notes = note;
+                        //downloadQuality.Notes = note;
                         downloadQuality.Mode |= DownloadQualityMode.Note;
                     }
 
                     if (!string.IsNullOrEmpty(size) && !downloadQuality.Mode.HasFlag(DownloadQualityMode.Size))
                     {
-                        downloadQuality.Size = size;
+                        //downloadQuality.Size = size;
                         downloadQuality.Mode |= DownloadQualityMode.Size;
                     }
 
@@ -422,8 +422,8 @@ namespace PaheScrapper
                         Quality = quality1 ??
                                   quality2 ??
                                   quality3,
-                        Size = sizeAvailable ?
-                            size1 ?? size2 : null,
+                        //Size = sizeAvailable ?
+                        //    size1 ?? size2 : null,
                         Notes = qualityNote
                     };
 

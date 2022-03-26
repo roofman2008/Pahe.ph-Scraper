@@ -122,9 +122,9 @@ namespace PaheScrapper.Helpers
                 var hasSize = token.ContainPattern(Sizes, out var sizePattern);
                 var hasHttp = token.ContainPattern(Http);
                 var hasHRef = token.ContainOpenTags(HReference);
-                var hasNote = token.ContainPattern(Notes);
+                //var hasNote = token.ContainPattern(Notes);
 
-                if (!hasSize || hasHttp || hasHRef || hasNote) 
+                if (!hasSize || hasHttp || hasHRef /*|| hasNote*/) 
                     continue;
 
                 float size;
@@ -148,9 +148,9 @@ namespace PaheScrapper.Helpers
                 var hasQuality = token.ContainPattern(Qualities);
                 var hasHttp = token.ContainPattern(Http);
                 var hasHRef = token.ContainOpenTags(HReference);
-                var hasNote = token.ContainPattern(Notes);
+                //var hasNote = token.ContainPattern(Notes);
 
-                if (!hasQuality || hasHttp || hasHRef || hasNote)
+                if (!hasQuality || hasHttp || hasHRef /*|| hasNote*/)
                     continue;
 
                 var quality = token.TrimStart().TrimEnd();
@@ -159,25 +159,25 @@ namespace PaheScrapper.Helpers
 
             return null;
         }
-        public static string ExtractNote(string source)
-        {
-            var tokens = source.Split(Delimiters, StringSplitOptions.RemoveEmptyEntries);
+        //public static string ExtractNote(string source)
+        //{
+        //    var tokens = source.Split(Delimiters, StringSplitOptions.RemoveEmptyEntries);
 
-            foreach (var token in tokens)
-            {
-                var hasNote = token.ContainPattern(Notes);
-                var hasHttp = token.ContainPattern(Http);
-                var hasHRef = token.ContainOpenTags(HReference);
+        //    foreach (var token in tokens)
+        //    {
+        //        var hasNote = token.ContainPattern(Notes);
+        //        var hasHttp = token.ContainPattern(Http);
+        //        var hasHRef = token.ContainOpenTags(HReference);
 
-                if (!hasNote || hasHttp || hasHRef)
-                    continue;
+        //        if (!hasNote || hasHttp || hasHRef)
+        //            continue;
 
-                var note = token.TrimStart().TrimEnd();
-                return note;
-            }
+        //        var note = token.TrimStart().TrimEnd();
+        //        return note;
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
         public static HRef[] ExtractHRef(string source)
         {
             var hRefs = new List<HRef>();
